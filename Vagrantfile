@@ -29,6 +29,10 @@ Vagrant.configure("2") do |config|
   lnodes = nodes['ctlnodes']
   if lnodes
     lnodes.each do |key|
+      next if nodes['network'] != 'ovn' && key == 'ovsdb'
+      if nodes['network'] == 'ovn' && (key == 'ovsdb' || key == 'neutron')
+        config.vm.synced_folder "ovnbin/debian1404.ovs2.5.90", "/onvm/debpackages", disabled: false, create: true
+      end
       config.vm.define "#{key}" do |node|
         nodekey = nodes['logical2physical'][key]
         node.vm.provider :managed do |managed|

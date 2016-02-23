@@ -33,11 +33,13 @@ logical2physical:
   glance: controller
   cinder: controller
   neutron: controller
+  ovsdb: controller
   nova: nova
   heat: nova
 
 ctlnodes:
   - mysqldb
+  - ovsdb
   - rabbitmq
   - keystone
   - glance
@@ -58,9 +60,9 @@ ntpserver: mysqldb
 
 backuphost: nova
 
-# The supported network types are openvswitch & linuxbridge
+# The supported network types are openvswitch, linuxbridge and ovn
 #
-network: linuxbridge
+network: ovn
 
 pubnic: eth0
 
