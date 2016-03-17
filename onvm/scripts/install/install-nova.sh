@@ -59,20 +59,11 @@ iniset /etc/nova/nova.conf neutron service_metadata_proxy 'True'
 iniset /etc/nova/nova.conf neutron metadata_proxy_shared_secret $1
 
 #Setup cadf
-
-
-iniset /etc/nova/api-paste.ini 'composite:openstack_compute_api_legacy_v2' 'keystone' 'compute_req_id faultwrap sizelimit authtoken audit keystonecontext legacy_ratelimit osapi_compute_app_legacy_v2'
-iniset /etc/nova/api-paste.ini 'composite:openstack_compute_api_legacy_v2' 'keystone_nolimit' 'compute_req_id faultwrap sizelimit authtoken audit keystonecontext osapi_compute_app_legacy_v2'
-
-iniset /etc/nova/api-paste.ini 'composite:openstack_compute_api_v21' keystone 'compute_req_id faultwrap sizelimit authtoken audit keystonecontext osapi_compute_app_v21'
-iniset /etc/nova/api-paste.ini 'composite:openstack_compute_api_v21_legacy_v2_compatible' keystone 'compute_req_id faultwrap sizelimit authtoken audit keystonecontext legacy_v2_compatible osapi_compute_app_v21'
 iniset /etc/nova/api-paste.ini 'filter:audit' 'paste.filter_factory' 'keystonemiddleware.audit:filter_factory'
 iniset /etc/nova/api-paste.ini 'filter:audit' 'audit_map_file' '/etc/nova/api_audit_map.conf'
 
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/nova/api-paste.ini
-wget https://raw.githubusercontent.com/openstack/pycadf/stable/liberty/etc/pycadf/nova_api_audit_map.conf -O /etc/nova/api_audit_map.conf
-chown nova:nova /etc/nova/api_audit_map.conf
 
 su -s /bin/sh -c "nova-manage db sync" nova
 
