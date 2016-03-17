@@ -1,0 +1,12 @@
+---
+
+metric:
+  - name: "qradar"
+    event_type:
+      - "audit.*"
+    type: "gauge"
+    unit: B
+    volume: 2
+    resource_id: $.payload.id
+    project_id: $.payload.initiator.project_id
+

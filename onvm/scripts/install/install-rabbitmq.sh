@@ -11,5 +11,7 @@ apt-get install -qqy "$leap_aptopt" rabbitmq-server
 rabbitmqctl add_user openstack $1
 
 rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+rabbitmqctl set_user_tags openstack administrator
+rabbitmq-plugins enable rabbitmq_management
 
 

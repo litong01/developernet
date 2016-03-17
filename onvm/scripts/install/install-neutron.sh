@@ -8,48 +8,9 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
 # Make sure that the configuration in conf.yml file is correct in terms of
 # what network to use
-
-apt-get install -qqy "$leap_aptopt" neutron-server neutron-plugin-ml2 \
-  neutron-metadata-agent python-neutronclient neutron-dhcp-agent
-
-if [ "$leap_network" = 'ovn' ]; then
-  echo "racoon racoon/config_mode select direct" | debconf-set-selections
-
-  apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
-  apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
-    debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
-    python-qt4 python-twisted-conch python-zopeinterface python-six
-  apt-get install -qqy "$leap_aptopt" racoon
-
-  debloc='/onvm/debpackages'
-  dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
-  dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
-  dpkg -i "$debloc"/openvswitch-datapath-dkms_2.5.90-1_all.deb
-  dpkg -i "$debloc"/python-openvswitch_2.5.90-1_all.deb
-  dpkg -i "$debloc"/openvswitch-ipsec_2.5.90-1_amd64.deb
-  dpkg -i "$debloc"/openvswitch-pki_2.5.90-1_all.deb
-  dpkg -i "$debloc"/openvswitch-vtep_2.5.90-1_amd64.deb
-  dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
-  dpkg -i "$debloc"/ovn-central_2.5.90-1_amd64.deb
-  dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
-
-  modprobe -r vport_geneve
-  modprobe -r openvswitch
-
-  rm -f /etc/openvswitch/.*.db.~lock~
-
-  modprobe openvswitch
-  modprobe vport_geneve
-
-  echo "Creating OVS, OVN-Southbound and OVN-Northbound Databases"
-  ovsdb-tool create /etc/openvswitch/conf.db /onvm/conf/vswitch.ovsschema
-  ovsdb-tool create /etc/openvswitch/ovnsb.db /onvm/conf/ovn-sb.ovsschema
-  ovsdb-tool create /etc/openvswitch/ovnnb.db /onvm/conf/ovn-nb.ovsschema
-
-else
-  apt-get install -qqy "$leap_aptopt" neutron-plugin-"${leap_network}"-agent \
-    neutron-l3-agent
-fi
+apt-get install -qqy "$leap_aptopt" neutron-server vlan neutron-plugin-ml2 \
+  neutron-plugin-"${leap_network}"-agent neutron-l3-agent neutron-dhcp-agent \
+  neutron-metadata-agent python-neutronclient
 
 echo "Neutron packages are installed!"
 
@@ -57,6 +18,8 @@ echo "Neutron packages are installed!"
 echo "Configure the server component"
 
 iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
+iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'ml2'
+iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
@@ -64,17 +27,6 @@ iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logic
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
-
-if [ "$leap_network" = 'ovn' ]; then
-  iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'networking_ovn.plugin.OVNPlugin'
-  iniset /etc/neutron/neutron.conf DEFAULT service_plugins ""
-  iniset /etc/neutron/plugins/networking-ovn.ini ovn ovsdb_connection "$OVN_REMOTE"
-  iniset /etc/neutron/plugins/networking-ovn.ini ovn ovn_l3_mode "$OVN_L3_MODE"
-else
-  iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'ml2'
-  iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router'
-fi
-
 
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
@@ -103,71 +55,64 @@ iniset /etc/neutron/neutron.conf nova project_name 'service'
 iniset /etc/neutron/neutron.conf nova username 'nova'
 iniset /etc/neutron/neutron.conf nova password $1
 
+# Configure /etc/neutron/plugins/ml2/ml2_conf.ini
+echo "Configure Modular Layer 2 (ML2) plug-in"
+
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'flat,vxlan'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types 'vxlan'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers 'port_security'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group 'True'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers "${leap_network},l2population"
 
 
-if [ "$leap_network" = 'ovn' ]; then
-  echo 'Nothing!'
+if [ "$leap_network" = 'openvswitch' ]; then
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs local_ip $3
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs enable_tunneling True
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs bridge_mappings 'public:br-ex'
+
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs integration_bridge br-int
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs tunnel_bridge br-tun
+  iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
+  iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
 
 else
-  # Configure /etc/neutron/plugins/ml2/ml2_conf.ini
-  echo "Configure Modular Layer 2 (ML2) plug-in"
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings 'public:eth0,vxlan:eth1'
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
 
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'flat,vxlan'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types 'vxlan'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers 'port_security'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group 'True'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers "${leap_network},l2population"
-
-
-  if [ "$leap_network" = 'openvswitch' ]; then
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs local_ip $3
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs enable_tunneling True
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs bridge_mappings 'public:br-ex'
-
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs integration_bridge br-int
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs tunnel_bridge br-tun
-    iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
-    iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
-
-  else
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings 'public:eth0,vxlan:eth1'
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
-
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
-    iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent prevent_arp_spoofing 'True'
-    iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
-    iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
-  fi
-
-  # Configure the kernel to enable packet forwarding and disable reverse path filting
-  echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
-  confset /etc/sysctl.conf net.ipv4.ip_forward 1
-  confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
-  confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
-
-  echo 'Load the new kernel configuration'
-  sysctl -p
-
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent l2_population True
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent tunnel_types vxlan
-
-  # Configure /etc/neutron/l3_agent.ini 
-  echo "Configure the layer-3 agent"
-
-  iniset /etc/neutron/l3_agent.ini DEFAULT external_network_bridge ''
-  iniset /etc/neutron/l3_agent.ini DEFAULT debug 'True'
-  iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
-  iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
-  iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
-
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
+  iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent prevent_arp_spoofing 'True'
+  iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
+  iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
 fi
+
+# Configure the kernel to enable packet forwarding and disable reverse path filting
+echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
+confset /etc/sysctl.conf net.ipv4.ip_forward 1
+confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
+confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
+
+echo 'Load the new kernel configuration'
+sysctl -p
+
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent l2_population True
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent tunnel_types vxlan
+
+
+# Configure /etc/neutron/l3_agent.ini 
+echo "Configure the layer-3 agent"
+
+iniset /etc/neutron/l3_agent.ini DEFAULT external_network_bridge ''
+iniset /etc/neutron/l3_agent.ini DEFAULT debug 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 
 
 # Configure /etc/neutron/dhcp_agent.ini
@@ -177,12 +122,9 @@ iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp
 iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file "/etc/neutron/dnsmasq.conf"
-if ! grep "dhcp-option=26" /etc/neutron/dnsmasq.conf ; then
-  echo "dhcp-option=26,1400" | sudo tee -a /etc/neutron/dnsmasq.conf
-fi
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
 
-
+echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
 
 #Configure /etc/neutron/metadata_agent.ini
 echo "Configure the metadata agent"
@@ -224,15 +166,11 @@ if [ "$leap_network" = 'openvswitch' ]; then
   ovs-vsctl add-br br-ex
 fi
 
-if [ "$leap_network" = 'ovn' ]; then
-
-else
-  service neutron-server restart
-  service neutron-plugin-"${leap_network}"-agent restart
-  service neutron-dhcp-agent restart
-  service neutron-metadata-agent restart
-  service neutron-l3-agent restart
-fi
+service neutron-server restart
+service neutron-plugin-"${leap_network}"-agent restart
+service neutron-dhcp-agent restart
+service neutron-metadata-agent restart
+service neutron-l3-agent restart
 
 rm -f /var/lib/neutron/neutron.sqlite
 
