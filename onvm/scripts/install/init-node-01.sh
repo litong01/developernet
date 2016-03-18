@@ -7,6 +7,8 @@
 
 source /onvm/scripts/ini-config
 
+service apache2 restart
+
 echo "Setting up public and private network..."
 
 source ~/admin-openrc.sh

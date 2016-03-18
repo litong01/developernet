@@ -6,6 +6,9 @@
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
+echo "Downloading cirros cloud image..."
+wget -nv http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+
 echo "manual" > /etc/init/keystone.override
 
 apt-get install -qqy "$leap_aptopt" keystone apache2 libapache2-mod-wsgi memcached python-memcache

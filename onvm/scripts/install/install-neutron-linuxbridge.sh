@@ -9,7 +9,7 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 # Make sure that the configuration in conf.yml file is correct in terms of
 # what network to use
 apt-get install -qqy "$leap_aptopt" neutron-server vlan neutron-plugin-ml2 \
-  neutron-plugin-"${leap_network}"-agent neutron-l3-agent neutron-dhcp-agent \
+  neutron-plugin-linuxbridge-agent neutron-l3-agent neutron-dhcp-agent \
   neutron-metadata-agent python-neutronclient
 
 echo "Neutron packages are installed!"
@@ -66,31 +66,19 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers "${leap_network},l2population"
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers "linuxbridge,l2population"
 
 
-if [ "$leap_network" = 'openvswitch' ]; then
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs local_ip $3
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs enable_tunneling True
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs bridge_mappings 'public:br-ex'
 
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs integration_bridge br-int
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs tunnel_bridge br-tun
-  iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
-  iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings 'public:eth0,vxlan:eth1'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
 
-else
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings 'public:eth0,vxlan:eth1'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
-
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
-  iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent prevent_arp_spoofing 'True'
-  iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
-  iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
-fi
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent prevent_arp_spoofing 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
 
 # Configure the kernel to enable packet forwarding and disable reverse path filting
 echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
@@ -161,13 +149,8 @@ su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
 
 
-if [ "$leap_network" = 'openvswitch' ]; then
-  service openvswitch-switch restart
-  ovs-vsctl add-br br-ex
-fi
-
 service neutron-server restart
-service neutron-plugin-"${leap_network}"-agent restart
+service neutron-plugin-linuxbridge-agent restart
 service neutron-dhcp-agent restart
 service neutron-metadata-agent restart
 service neutron-l3-agent restart

@@ -26,13 +26,13 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant", disabled: true
   config.vm.synced_folder "onvm", "/onvm", disabled: false, create: true
 
+  n_type = nodes['network']
+  suffixes = nodes['suffixes']
+
   lnodes = nodes['ctlnodes']
   if lnodes
     lnodes.each do |key|
-      next if nodes['network'] != 'ovn' && key == 'ovsdb'
-      if nodes['network'] == 'ovn' && (key == 'ovsdb' || key == 'neutron')
-        config.vm.synced_folder "ovnbin/debian1404.ovs2.5.90", "/onvm/debpackages", disabled: false, create: true
-      end
+      suffix = suffixes.index(key)? ('-' + n_type):''
       config.vm.define "#{key}" do |node|
         nodekey = nodes['logical2physical'][key]
         node.vm.provider :managed do |managed|
@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
         end
 
         node.vm.provision "#{key}-install", type: "shell" do |s|
-          s.path = "onvm/scripts/install/install-" + key + ".sh"
+          s.path = "onvm/scripts/install/install-" + key + suffix + ".sh"
           s.args = ids['sys_password'] + ' ' + nodes[nodekey]['eth0'] + ' ' + nodes[nodekey]['eth1']
         end
       end
@@ -57,7 +57,7 @@ Vagrant.configure("2") do |config|
         end
 
         node.vm.provision "#{key}-install", type: "shell" do |s|
-          s.path = "onvm/scripts/install/install-compute.sh"
+          s.path = "onvm/scripts/install/install-compute-" + n_type + ".sh"
           s.args = ids['sys_password'] + " " + nodes[key]['eth0'] + " " + nodes[key]['eth1']
         end
 
@@ -90,23 +90,6 @@ Vagrant.configure("2") do |config|
         s.path = "onvm/scripts/install/init-node-02.sh"
         s.args = ids['sys_password']
       end
-  end
-
-  # do initial setup ovs bridge with the external network
-  # all initialization should run on neutron controller node
-  if nodes['network'] == 'openvswitch'
-    config.vm.define "init-bridge" do |node|
-        node.vm.provider :managed do |managed|
-          managed.server = nodes[nodes['logical2physical']['neutron']]['eth0']
-        end
-
-        node.vm.provision "init-bridge", type: "shell" do |s|
-          s.path = "onvm/scripts/install/init-bridge.sh"
-          s.args = ids['sys_password'] + ' '
-          s.args += nodes[nodes['logical2physical']['neutron']]['eth0'] + ' '
-          s.args += nodes[nodes['logical2physical']['neutron']]['eth1']
-        end
-    end
   end
 
 end
