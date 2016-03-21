@@ -73,16 +73,16 @@ Setup a local ubuntu apt repository
 
 1. Install apt-mirror::
 
-    apt-get install apt-mirror apache2
+        apt-get install apt-mirror apache2
 
 2. Create a directory named /apt-mirror to mirror the repository::
 
-    mkdir /apt-mirror
+        mkdir /apt-mirror
 
 3. Config apt-mirror to use /apt-mirror directory by changing
 /etc/apt/mirror.list file::
 
-    set base_path    /apt-mirror
+        set base_path    /apt-mirror
 
 4. Also make sure in /etc/apt/mirror.list file, there are sections like the
 following::
@@ -102,14 +102,14 @@ following::
 5. Run apt-mirror which will take a day or two depends on your network
    speed. For a trusty ubuntu release, there will be around 150GB needed::
 
-    apt-mirror
+        apt-mirror
 
 6. After all the packages have been downloaded, create links in /var/www/html
    directory and point to /apt-mirror subdirectories according to your
    settings, for example::
 
-       ln -s /apt-mirror/mirror/archive.ubuntu.com/ubuntu ubuntu
-       ln -s /apt-mirror/mirror/ubuntu-cloud.archive.canonical.com/ubuntu/ cubuntu
+        ln -s /apt-mirror/mirror/archive.ubuntu.com/ubuntu ubuntu
+        ln -s /apt-mirror/mirror/ubuntu-cloud.archive.canonical.com/ubuntu/ cubuntu
 
    The second one was to support openstack liberty packages.
 
