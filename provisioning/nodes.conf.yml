@@ -98,7 +98,7 @@ timezone: America\/Los_Angeles
 
 cindervg: vg02
 
-glance_image_location: \/storage\/images
+glance_image_location: /storage/images
 
 ntpserver: mysqldb
 
