@@ -5,6 +5,7 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+apt-get update
 
 apt-get install -qqy "$leap_aptopt" heat-api heat-api-cfn heat-engine python-heatclient
 

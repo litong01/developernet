@@ -55,6 +55,11 @@ public_net:
   end_ip: 9.30.107.184
   gateway: 9.30.107.129
 
+
+# Logical node to physical node mapping, if you like to use one physical
+# server to run multiple services, simply map multiple services into one
+# physical node. The following setup uses one machine named keystone to run
+# keystone, rabbitmq and horizon services.
 logical2physical:
   mysqldb: mysqldb
   keystone: keystone
@@ -66,6 +71,7 @@ logical2physical:
   nova: nova
   heat: nova
 
+# Define how many logical nodes and the sequence of the installation
 ctlnodes:
   - mysqldb
   - rabbitmq
@@ -91,6 +97,8 @@ suffixes:
 timezone: America\/Los_Angeles
 
 cindervg: vg02
+
+glance_image_location: \/storage\/images
 
 ntpserver: mysqldb
 

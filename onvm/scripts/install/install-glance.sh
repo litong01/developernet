@@ -5,6 +5,7 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+apt-get update
 
 apt-get install -qqy "$leap_aptopt" glance python-glanceclient
 
@@ -31,27 +32,13 @@ iniset /etc/glance/glance-api.conf keystone_authtoken password $1
 
 iniset /etc/glance/glance-api.conf 'paste_deploy' 'flavor' 'keystone'
 
-mkdir -p /storage
-sp=$(lvdisplay | grep /dev/vg02/storage)
-if [ ! "$sp" ];then
-  echo 'Ready to create storage'
-  lvcreate -l 100%FREE -n storage vg02
-  mkfs -t ext4 /dev/vg02/storage
-fi
 
-sp=$(mount | grep /storage)
-if [ ! "$sp" ]; then
-  mount /dev/vg02/storage /storage/
-  echo '/dev/mapper/vg02-storage    /storage    ext4    errors=continue    0    0' >> /etc/fstab
-fi
-
-
-mkdir -p /storage/images
-chown glance:glance /storage/images
+mkdir -p $leap_glance_image_location
+chown glance:glance $leap_glance_image_location
 
 
 iniset /etc/glance/glance-api.conf 'glance_store' 'default_store' 'file'
-iniset /etc/glance/glance-api.conf 'glance_store' 'filesystem_store_datadir' '/storage/images/'
+iniset /etc/glance/glance-api.conf 'glance_store' 'filesystem_store_datadir' $leap_glance_image_location
 
 iniset /etc/glance/glance-registry.conf database connection "mysql+pymysql://glance:$1@${leap_logical2physical_mysqldb}/glance"
 iniset /etc/glance/glance-registry.conf DEFAULT rpc_backend 'rabbit'

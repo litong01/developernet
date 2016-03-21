@@ -5,6 +5,7 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+apt-get update
 
 echo "manual" > /etc/init/keystone.override
 
@@ -159,20 +160,5 @@ openstack role add --domain heat --user heat_domain_admin admin
 openstack role create heat_stack_owner
 openstack role add --project demo --user demo heat_stack_owner
 openstack role create heat_stack_user
-
-mkdir -p /storage
-sp=$(lvdisplay | grep /dev/vg02/storage)
-if [ ! "$sp" ];then
-  echo 'Ready to create storage'
-  lvcreate -l 100%FREE -n storage vg02
-  mkfs -t ext4 /dev/vg02/storage
-fi
-
-sp=$(mount | grep /storage)
-if [ ! "$sp" ]; then
-  mount /dev/vg02/storage /storage/
-  echo '/dev/mapper/vg02-storage    /storage    ext4    errors=continue    0    0' >> /etc/fstab
-fi
-
 
 echo "Keystone setup is now complete!"

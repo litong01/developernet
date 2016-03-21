@@ -5,6 +5,7 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+apt-get update
 
 echo "racoon racoon/config_mode select direct" | debconf-set-selections
 

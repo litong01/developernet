@@ -5,8 +5,8 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
-
 apt-get -qqy update
+
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 apt-get install -qqy "$leap_aptopt" neutron-plugin-openvswitch-agent
 

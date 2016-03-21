@@ -25,6 +25,10 @@ public_net:
   end_ip: 192.168.1.219
   gateway: 192.168.1.1
 
+# Logical node to physical node mapping, if you like to use one physical
+# server to run multiple services, simply map multiple services into one
+# physical node. The following setup uses one machine named controller to run
+# mysqldb, keystone, rabbitmq, horizon, glance, cinder and neutron services.
 logical2physical:
   mysqldb: controller
   keystone: controller
@@ -36,6 +40,8 @@ logical2physical:
   nova: nova
   heat: nova
 
+
+# Define how many logical nodes and the sequence of the installation
 ctlnodes:
   - mysqldb
   - rabbitmq
@@ -57,6 +63,8 @@ suffixes:
 timezone: America\/New_York
 
 cindervg: vg02
+
+glance_image_location: \/storage\/images
 
 ntpserver: mysqldb
 

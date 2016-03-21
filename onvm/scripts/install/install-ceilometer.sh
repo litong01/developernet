@@ -5,6 +5,7 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+apt-get update
 
 apt-get -qqy install ceilometer-collector ceilometer-agent-notification
 

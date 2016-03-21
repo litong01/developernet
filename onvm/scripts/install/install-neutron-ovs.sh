@@ -5,6 +5,7 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+apt-get update
 
 # Make sure that the configuration in conf.yml file is correct in terms of
 # what network to use
@@ -165,20 +166,6 @@ echo "Adding default route..."
 route add -net 0.0.0.0 gw $leap_public_net_gateway br-ex
 
 rm -f /var/lib/neutron/neutron.sqlite
-
-mkdir -p /storage
-sp=$(lvdisplay | grep /dev/vg02/storage)
-if [ ! "$sp" ];then
-  echo 'Ready to create storage'
-  lvcreate -l 100%FREE -n storage vg02
-  mkfs -t ext4 /dev/vg02/storage
-fi
-
-sp=$(mount | grep /storage)
-if [ ! "$sp" ]; then
-  mount /dev/vg02/storage /storage/
-  echo '/dev/mapper/vg02-storage    /storage    ext4    errors=continue    0    0' >> /etc/fstab
-fi
 
 echo "Neutron setup is now complete!"
 
