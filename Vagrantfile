@@ -30,7 +30,6 @@ Vagrant.configure("2") do |config|
   suffixes = nodes['suffixes']
 
   sync_cfg = nodes['synchfolders'][nodes['network']]
-  syncednodes = []
 
   lnodes = nodes['ctlnodes']
   if lnodes
@@ -39,8 +38,7 @@ Vagrant.configure("2") do |config|
       config.vm.define "#{key}" do |node|
         nodekey = nodes['logical2physical'][key]
 
-        if sync_cfg['nodes'].index(nodekey) && !syncednodes.index(nodekey)
-          syncednodes.push(nodekey)
+        if sync_cfg['nodes'].index(key)
           node.vm.synced_folder sync_cfg['folder'], "/leapbin", disabled: false, create: true
         end
 
@@ -62,8 +60,7 @@ Vagrant.configure("2") do |config|
     lnodes.each do |key|
       config.vm.define "#{key}" do |node|
 
-        if sync_cfg['nodes'].index(key) && !syncednodes.index(key)
-          syncednodes.push(key)
+        if sync_cfg['nodes'].index(key)
           node.vm.synced_folder sync_cfg['folder'], "/leapbin", disabled: false, create: true
         end
 

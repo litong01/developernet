@@ -114,6 +114,9 @@ aptopt: --force-yes
 #
 network: ovs
 
+
+# The nodes should be a list of logical name
+# The folder should be a local directory start from the project root
 synchfolders:
   ovn: 
     folder: ovnbin/debian1404.ovs2.5.90
