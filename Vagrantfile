@@ -29,7 +29,7 @@ Vagrant.configure("2") do |config|
   n_type = nodes['network']
   suffixes = nodes['suffixes']
 
-  sync_cfg = nodes['synchfolders'][nodes['network']]
+  sync_cfg = nodes['synchfolders'][n_type]
 
   lnodes = nodes['ctlnodes']
   if lnodes

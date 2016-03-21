@@ -78,7 +78,7 @@ aptopt: --force-yes
 
 # The supported network types are openvswitch, linuxbridge and ovn
 #
-network: ovs
+network: linuxbridge
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
@@ -88,4 +88,7 @@ synchfolders:
     nodes: [neutron, compute01]
   ovs: 
     folder:
-    nodes:
+    nodes: []
+  linuxbridge:
+    folder:
+    nodes: []
