@@ -53,12 +53,6 @@ Vagrant.configure("2") do |config|
   tstamp = Time.now.strftime("%Y%m%d-%H%M")
   pnodes.keys.each do |key|
     config.vm.define "#{key}" do |node|
-      puts 'TTTTTTTTTTTTTTTTTTTTTTTTTTT'
-      puts key
-      if key == 'compute01'
-        node.vm.synced_folder "ovnbin", "/ovnbin", disabled: false, create: true
-      end
-
       node.vm.provider :managed do |managed|
         managed.server = nodes[key]['eth0']
       end
