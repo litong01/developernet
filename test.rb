@@ -1,27 +1,16 @@
-require 'ipaddr'
+require 'yaml'
 
-prov_network = "10.0.0.0/16"
+nodes = YAML.load_file("provisioning/nodes.dev.conf.yml")
+ids = YAML.load_file("provisioning/ids.dev.conf.yml")
 
-net = IPAddr.new prov_network
-puts net.to_range()
-bbb = net.inspect().split("/")[1].split(">")[0]
-#bbb = bbb.split("/").split(">")
-puts net.to_s
+puts nodes['network']
+puts nodes['synchfolders'][nodes['network']]['folder']
+if nodes['synchfolders'][nodes['network']]['nodes'].index('mysqldb')
+  puts 'hi'
+else
+  puts 'cooo'
+end
 
-puts net.to_s().split(".").first(3)
-#puts net.to_range().max()
-puts net.to_range().last(3).first()
-puts net.to_range().first(4)[3]
-
-#gateway, db_ip, controller_ip, compute1_ip, compute2_ip = net.to_range().first(6).last(5)
-#puts "gateway is #{gateway}"
-#puts db_ip
-#puts controller_ip
-#puts compute1_ip
-
-#end_ip = net.to_range().last()
-#puts end_ip
-aa = "aaaabbbb" +
-     "bbbb" +
-     "cccc"
-puts aa
+syncednodes = []
+syncednodes.index('whatever')
+syncednodes.push('aaaa')

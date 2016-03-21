@@ -113,3 +113,11 @@ aptopt: --force-yes
 # The supported network types are openvswitch, linuxbridge and ovn
 #
 network: ovs
+
+synchfolders:
+  ovn: 
+    folder: ovnbin/debian1404.ovs2.5.90
+    nodes: [neutron, compute01, compute02, compute03, compute04, compute05]
+  ovs: 
+    folder:
+    nodes:
