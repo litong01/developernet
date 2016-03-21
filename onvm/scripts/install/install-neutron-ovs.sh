@@ -159,9 +159,10 @@ service neutron-metadata-agent restart
 service neutron-l3-agent restart
 
 
-echo "Add public nic to ovs bridge..."
+echo "Adding public nic to ovs bridge..."
 ovs-vsctl add-port br-ex $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-ex $2
-
+echo "Adding default route..."
+route add -net 0.0.0.0 gw $leap_public_net_gateway br-ex
 
 rm -f /var/lib/neutron/neutron.sqlite
 
