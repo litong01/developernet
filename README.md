@@ -87,17 +87,17 @@ Setup a local ubuntu apt repository
 4. Also make sure in /etc/apt/mirror.list file, there are sections like the
 following::
 
-       deb http://archive.ubuntu.com/ubuntu trusty main restricted universe multiverse
-       deb http://archive.ubuntu.com/ubuntu trusty-security main restricted universe multiverse
-       deb http://archive.ubuntu.com/ubuntu trusty-updates main restricted universe multiverse
+        deb http://archive.ubuntu.com/ubuntu trusty main restricted universe multiverse
+        deb http://archive.ubuntu.com/ubuntu trusty-security main restricted universe multiverse
+        deb http://archive.ubuntu.com/ubuntu trusty-updates main restricted universe multiverse
 
-       deb-src http://archive.ubuntu.com/ubuntu trusty main restricted universe multiverse
-       deb-src http://archive.ubuntu.com/ubuntu trusty-security main restricted universe multiverse
-       deb-src http://archive.ubuntu.com/ubuntu trusty-updates main restricted universe multiverse
+        deb-src http://archive.ubuntu.com/ubuntu trusty main restricted universe multiverse
+        deb-src http://archive.ubuntu.com/ubuntu trusty-security main restricted universe multiverse
+        deb-src http://archive.ubuntu.com/ubuntu trusty-updates main restricted universe multiverse
 
-       deb http://ubuntu-cloud.archive.canonical.com/ubuntu trusty-updates/liberty main
+        deb http://ubuntu-cloud.archive.canonical.com/ubuntu trusty-updates/liberty main
 
-       clean http://archive.ubuntu.com/ubuntu
+        clean http://archive.ubuntu.com/ubuntu
 
 5. Run apt-mirror which will take a day or two depends on your network
    speed. For a trusty ubuntu release, there will be around 150GB needed::
