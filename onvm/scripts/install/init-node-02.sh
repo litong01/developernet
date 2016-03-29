@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # $1 sys_password
+# $2 public net id
+# $3 public net start_ip
+# $4 public net end_ip
+# $5 public net gateway
 
 echo "Setting image..."
 
@@ -14,4 +18,4 @@ glance image-create --name "cirros" \
   --disk-format qcow2 --container-format bare \
   --visibility public
 
-echo "Ini-node-02 is now complete!"
+echo "Init-node-02 is now complete!"

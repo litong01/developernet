@@ -32,4 +32,4 @@ neutron router-interface-add demo-router demonet-subnet
 
 neutron router-gateway-set demo-router internet
 
-echo "Ini-node-01 is now complete!"
+echo "Init-node-01 is now complete!"
