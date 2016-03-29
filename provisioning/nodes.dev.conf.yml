@@ -2,22 +2,27 @@
 repo:
   host_name: repo.leap.dev
   eth0: 192.168.1.88
-  eth1: 192.168.15.88
+  eth1: 192.168.1.88
 
 controller:
   host_name: controller.leap.dev
-  eth0: 192.168.1.90
-  eth1: 192.168.15.90
+  eth0: 192.168.1.23
+  eth1: 192.168.15.23
 
-nova:
-  host_name: nova.leap.dev
-  eth0: 192.168.1.93
-  eth1: 192.168.15.93
+neutron:
+  host_name: neutron.leap.dev
+  eth0: 192.168.1.18
+  eth1: 192.168.15.18
 
 compute01:
   host_name: compute01.leap.dev
   eth0: 192.168.1.130
   eth1: 192.168.15.130
+
+compute02:
+  host_name: compute02.leap.dev
+  eth0: 192.168.1.29
+  eth1: 192.168.15.29
 
 public_net:
   cidr: 192.168.1.0/24
@@ -36,9 +41,9 @@ logical2physical:
   horizon: controller
   glance: controller
   cinder: controller
-  neutron: controller
-  nova: nova
-  heat: nova
+  heat: controller
+  nova: controller
+  neutron: neutron
 
 
 # Define how many logical nodes and the sequence of the installation
@@ -55,6 +60,7 @@ ctlnodes:
 
 computenodes:
   - compute01
+  - compute02
 
 suffixes:
   - compute
@@ -76,9 +82,9 @@ uselocalrepo: yes
 
 aptopt: --force-yes
 
-# The supported network types are openvswitch, linuxbridge and ovn
+# The supported network types are ovs, linuxbridge and ovn
 #
-network: ovn
+network: ovs
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
