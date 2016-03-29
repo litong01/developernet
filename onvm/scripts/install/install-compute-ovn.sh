@@ -5,10 +5,37 @@
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
-apt-get -qqy update
+apt-get update
+
+echo "racoon racoon/config_mode select direct" | debconf-set-selections
+
+apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
+apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
+  debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
+  python-qt4 python-twisted-conch python-zopeinterface python-six
+#apt-get install -qqy "$leap_aptopt" racoon
+
+debloc='/leapbin'
+dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
+dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
+dpkg -i "$debloc"/openvswitch-datapath-dkms_2.5.90-1_all.deb
+dpkg -i "$debloc"/python-openvswitch_2.5.90-1_all.deb
+dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
+dpkg -i "$debloc"/ovn-central_2.5.90-1_amd64.deb
+dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
+
+modprobe -r vport_geneve
+modprobe -r openvswitch
+
+modprobe openvswitch
+modprobe vport_geneve
+
+
+service openvswitch restart
+# Create openvswitch database
+ovsdb-tool create /var/ovn/conf.db /onvm/conf/vswitch.ovsschema
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
-apt-get install -qqy "$leap_aptopt" neutron-plugin-openvswitch-agent
 
 echo "Compute packages are installed!"
 
@@ -20,7 +47,6 @@ iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 
 iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
 iniset /etc/nova/nova.conf DEFAULT security_group_api 'neutron'
-iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
 
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
@@ -157,6 +183,5 @@ rm -f /var/lib/nova/nova.sqlite
 
 service nova-compute restart
 service openvswitch-switch restart
-service neutron-plugin-openvswitch-agent restart
 
 echo "Compute setup is now complete!"
