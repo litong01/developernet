@@ -89,18 +89,18 @@ Vagrant.configure("2") do |config|
         managed.server = nodes[nodes['logical2physical']['keystone']]['eth0']
       end
 
-      node.vm.provision "init-node-01", type: "shell" do |s|
-        s.path = "onvm/scripts/install/init-node-01.sh"
-        s.args = ids['sys_password'] + " "
-        s.args += nodes['public_net']['cidr'] + " "
-        s.args += nodes['public_net']['start_ip'] + " "
-        s.args += nodes['public_net']['end_ip'] + " "
-        s.args += nodes['public_net']['gateway']
-      end
+      initfiles = Dir["onvm/scripts/install/init-node-*.sh"]
+      initfiles.each do | filepath |
+        pname = File.basename(filepath, ".*")
 
-      node.vm.provision "init-node-02", type: "shell" do |s|
-        s.path = "onvm/scripts/install/init-node-02.sh"
-        s.args = ids['sys_password']
+        node.vm.provision "#{pname}", type: "shell" do |s|
+          s.path = filepath
+          s.args = ids['sys_password'] + " "
+          s.args += nodes['public_net']['cidr'] + " "
+          s.args += nodes['public_net']['start_ip'] + " "
+          s.args += nodes['public_net']['end_ip'] + " "
+          s.args += nodes['public_net']['gateway']
+        end
       end
   end
 
