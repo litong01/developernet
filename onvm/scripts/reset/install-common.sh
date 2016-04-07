@@ -11,7 +11,7 @@ dpkg --remove-architecture i386
 if [ "$leap_uselocalrepo" <> 'yes' ]; then
   apt-get -qqy update
   apt-get -qqy install software-properties-common
-  add-apt-repository -y cloud-archive:liberty
+  add-apt-repository -y cloud-archive:mitaka
 fi
 apt-key update
 apt-get -qqy update
