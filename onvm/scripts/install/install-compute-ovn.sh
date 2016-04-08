@@ -41,8 +41,8 @@ iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_agent_manager 'neutron.agent.dhc
 iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'openvswitch'
 
 iniset /etc/neutron/dhcp_agent.ini AGENT availability_zone nova
-iniset /etc/neutron/dhcp_agent.ini AGENT root_helper_daemon 'sudo /usr/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
-iniset /etc/neutron/dhcp_agent.ini AGENT root_helper 'sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/dhcp_agent.ini AGENT root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/dhcp_agent.ini AGENT root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
 
 echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
 
