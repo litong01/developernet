@@ -3,6 +3,8 @@ DeveloperNet
 
 This is the vagrant project to install openstack onto physical servers.
 
+The release uses in this project is OpenStack mitaka
+
 The project uses vagrant plugin ManagedServers Provider, detailed information
 can be found here::
 
