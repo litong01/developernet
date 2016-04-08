@@ -78,7 +78,7 @@ aptopt: --force-yes
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: ovn
+network: linuxbridge
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
