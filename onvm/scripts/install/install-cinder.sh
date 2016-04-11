@@ -23,9 +23,9 @@ iniset /etc/cinder/cinder.conf oslo_messaging_rabbit rabbit_password $1
 
 iniset /etc/cinder/cinder.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/cinder/cinder.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
-iniset /etc/cinder/cinder.conf keystone_authtoken auth_plugin 'password'
-iniset /etc/cinder/cinder.conf keystone_authtoken project_domain_id 'default'
-iniset /etc/cinder/cinder.conf keystone_authtoken user_domain_id 'default'
+iniset /etc/cinder/cinder.conf keystone_authtoken auth_type 'password'
+iniset /etc/cinder/cinder.conf keystone_authtoken project_domain_name 'default'
+iniset /etc/cinder/cinder.conf keystone_authtoken user_domain_name 'default'
 iniset /etc/cinder/cinder.conf keystone_authtoken project_name 'service'
 iniset /etc/cinder/cinder.conf keystone_authtoken username 'cinder'
 iniset /etc/cinder/cinder.conf keystone_authtoken password $1

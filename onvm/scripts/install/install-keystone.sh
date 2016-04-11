@@ -19,9 +19,11 @@ iniset /etc/keystone/keystone.conf DEFAULT debug "True"
 
 iniset /etc/keystone/keystone.conf database connection mysql+pymysql://keystone:$1@$leap_logical2physical_mysqldb/keystone
 iniset /etc/keystone/keystone.conf memcache servers "localhost:11211"
-iniset /etc/keystone/keystone.conf token provider uuid
+iniset /etc/keystone/keystone.conf token provider fernet
 iniset /etc/keystone/keystone.conf token driver memcache
 iniset /etc/keystone/keystone.conf revoke driver sql
+
+keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 
 iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_userid openstack
@@ -51,10 +53,11 @@ export OS_IDENTITY_API_VERSION=3
 
 openstack service create --name keystone --description "OpenStack Identity" identity
 eval pub_ip=\$leap_${leap_logical2physical_keystone}_eth0; pub_ip=`echo $pub_ip`
-openstack endpoint create --region RegionOne identity public http://$pub_ip:5000/v2.0
-openstack endpoint create --region RegionOne identity internal http://$leap_logical2physical_keystone:5000/v2.0
-openstack endpoint create --region RegionOne identity admin http://$leap_logical2physical_keystone:35357/v2.0
+openstack endpoint create --region RegionOne identity public http://$pub_ip:5000/v3
+openstack endpoint create --region RegionOne identity internal http://$leap_logical2physical_keystone:5000/v3
+openstack endpoint create --region RegionOne identity admin http://$leap_logical2physical_keystone:35357/v3
 
+openstack domain create --description "Default Domain" default
 openstack project create --domain default --description "Admin Project" admin
 openstack user create --domain default --password $1 admin
 openstack role create admin
@@ -63,14 +66,13 @@ openstack project create --domain default --description "Service Project" servic
 
 openstack project create --domain default --description "Demo Project" demo
 openstack user create --domain default --password $1 demo
-
 openstack role create user
 openstack role add --project demo --user demo user
 
 
 # Now setup two files for testing
-echo "export OS_PROJECT_DOMAIN_ID=default" > ~/admin-openrc.sh
-echo "export OS_USER_DOMAIN_ID=default" >> ~/admin-openrc.sh
+echo "export OS_PROJECT_DOMAIN_NAME=default" > ~/admin-openrc.sh
+echo "export OS_USER_DOMAIN_NAME=default" >> ~/admin-openrc.sh
 echo "export OS_PROJECT_NAME=admin" >> ~/admin-openrc.sh
 echo "export OS_TENANT_NAME=admin" >> ~/admin-openrc.sh
 echo "export OS_USERNAME=admin" >> ~/admin-openrc.sh
@@ -78,8 +80,8 @@ echo "export OS_PASSWORD=$1" >> ~/admin-openrc.sh
 echo "export OS_AUTH_URL=http://${pub_ip}:35357/v3" >> ~/admin-openrc.sh
 echo "export OS_IDENTITY_API_VERSION=3" >> ~/admin-openrc.sh
 
-echo "export OS_PROJECT_DOMAIN_ID=default" > ~/demo-openrc.sh
-echo "export OS_USER_DOMAIN_ID=default" >> ~/demo-openrc.sh
+echo "export OS_PROJECT_DOMAIN_NAME=default" > ~/demo-openrc.sh
+echo "export OS_USER_DOMAIN_NAME=default" >> ~/demo-openrc.sh
 echo "export OS_PROJECT_NAME=demo" >> ~/demo-openrc.sh
 echo "export OS_TENANT_NAME=demo" >> ~/demo-openrc.sh
 echo "export OS_USERNAME=demo" >> ~/demo-openrc.sh
@@ -114,9 +116,9 @@ openstack endpoint create --region RegionOne image admin http://$leap_logical2ph
 
 openstack service create --name nova --description "OpenStack Compute" compute
 eval pub_ip=\$leap_${leap_logical2physical_nova}_eth0; pub_ip=`echo $pub_ip`
-openstack endpoint create --region RegionOne compute public http://$pub_ip:8774/v2/%\(tenant_id\)s
-openstack endpoint create --region RegionOne compute internal http://$leap_logical2physical_nova:8774/v2/%\(tenant_id\)s
-openstack endpoint create --region RegionOne compute admin http://$leap_logical2physical_nova:8774/v2/%\(tenant_id\)s
+openstack endpoint create --region RegionOne compute public http://$pub_ip:8774/v2.1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne compute internal http://$leap_logical2physical_nova:8774/v2.1/%\(tenant_id\)s
+openstack endpoint create --region RegionOne compute admin http://$leap_logical2physical_nova:8774/v2.1/%\(tenant_id\)s
 
 openstack service create --name neutron --description "OpenStack Networking" network
 eval pub_ip=\$leap_${leap_logical2physical_neutron}_eth0; pub_ip=`echo $pub_ip`

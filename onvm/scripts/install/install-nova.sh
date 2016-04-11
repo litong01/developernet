@@ -12,6 +12,8 @@ apt-get install -qqy "$leap_aptopt" nova-api nova-cert nova-conductor nova-conso
 
 echo "Nova packages are installed!"
 
+
+iniset /etc/nova/nova.conf api_database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova_api
 iniset /etc/nova/nova.conf database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova
 iniset /etc/nova/nova.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
@@ -20,16 +22,14 @@ iniset /etc/nova/nova.conf DEFAULT my_ip "$2"
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
 iniset /etc/nova/nova.conf DEFAULT notification_topics notifications
-
-iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
-iniset /etc/nova/nova.conf DEFAULT security_group_api 'neutron'
-iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
+iniset /etc/nova/nova.conf DEFAULT use_neutron True
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
+inidelete /etc/nova/nova.conf DEFAULT ec2_private_dns_show_ip
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '$my_ip'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
 
-iniset /etc/nova/nova.conf glance host $leap_logical2physical_glance
+iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glance:9292
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
 
@@ -40,16 +40,16 @@ iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
 
 iniset /etc/nova/nova.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/nova/nova.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
-iniset /etc/nova/nova.conf keystone_authtoken auth_plugin 'password'
-iniset /etc/nova/nova.conf keystone_authtoken project_domain_id 'default'
-iniset /etc/nova/nova.conf keystone_authtoken user_domain_id 'default'
+iniset /etc/nova/nova.conf keystone_authtoken auth_type 'password'
+iniset /etc/nova/nova.conf keystone_authtoken project_domain_name 'default'
+iniset /etc/nova/nova.conf keystone_authtoken user_domain_name 'default'
 iniset /etc/nova/nova.conf keystone_authtoken project_name 'service'
 iniset /etc/nova/nova.conf keystone_authtoken username 'nova'
 iniset /etc/nova/nova.conf keystone_authtoken password $1
 
 iniset /etc/nova/nova.conf neutron url http://$leap_logical2physical_neutron:9696
 iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone:35357
-iniset /etc/nova/nova.conf neutron auth_plugin 'password'
+iniset /etc/nova/nova.conf neutron auth_type 'password'
 iniset /etc/nova/nova.conf neutron project_domain_id 'default'
 iniset /etc/nova/nova.conf neutron user_domain_id 'default'
 iniset /etc/nova/nova.conf neutron region_name 'RegionOne'
@@ -66,6 +66,7 @@ iniset /etc/nova/api-paste.ini 'filter:audit' 'audit_map_file' '/etc/nova/api_au
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/nova/api-paste.ini
 
+su -s /bin/sh -c "nova-manage api_db sync" nova
 su -s /bin/sh -c "nova-manage db sync" nova
 
 service nova-api restart

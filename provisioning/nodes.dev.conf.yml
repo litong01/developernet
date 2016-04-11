@@ -31,8 +31,8 @@ public_net:
 # mysqldb, keystone, rabbitmq, horizon, glance, cinder and neutron services.
 logical2physical:
   mysqldb: controller
-  keystone: controller
   rabbitmq: controller
+  keystone: controller
   horizon: controller
   glance: controller
   cinder: controller

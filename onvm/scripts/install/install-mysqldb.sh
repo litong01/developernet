@@ -34,3 +34,7 @@ for db in keystone neutron nova glance cinder heat ceilometer; do
   mysql -uroot -p$1 -e "use $db; GRANT ALL PRIVILEGES ON $db.* TO '$db'@'%' IDENTIFIED BY '$1';"
 done
 
+mysql -uroot -p$1 -e "CREATE DATABASE nova_api;"
+mysql -uroot -p$1 -e "use nova_api; GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'localhost' IDENTIFIED BY '$1';"
+mysql -uroot -p$1 -e "use nova_api; GRANT ALL PRIVILEGES ON nova_api.* TO 'nova'@'%' IDENTIFIED BY '$1';"
+

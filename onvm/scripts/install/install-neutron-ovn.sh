@@ -92,8 +92,8 @@ iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_type 'password'
-iniset /etc/neutron/neutron.conf keystone_authtoken project_domain_id 'default'
-iniset /etc/neutron/neutron.conf keystone_authtoken user_domain_id 'default'
+iniset /etc/neutron/neutron.conf keystone_authtoken project_domain_name 'default'
+iniset /etc/neutron/neutron.conf keystone_authtoken user_domain_name 'default'
 iniset /etc/neutron/neutron.conf keystone_authtoken project_name 'service'
 iniset /etc/neutron/neutron.conf keystone_authtoken username 'neutron'
 iniset /etc/neutron/neutron.conf keystone_authtoken password $1
@@ -108,7 +108,7 @@ iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_data_changes 'True'
 iniset /etc/neutron/neutron.conf DEFAULT nova_url "http://${leap_logical2physical_nova}:8774/v2"
 
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
-iniset /etc/neutron/neutron.conf nova auth_plugin 'password'
+iniset /etc/neutron/neutron.conf nova auth_type 'password'
 iniset /etc/neutron/neutron.conf nova project_domain_id 'default'
 iniset /etc/neutron/neutron.conf nova user_domain_id 'default'
 iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
