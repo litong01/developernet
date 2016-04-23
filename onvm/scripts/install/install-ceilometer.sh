@@ -38,9 +38,9 @@ iniset /etc/ceilometer/ceilometer.conf  service_credentials password $1
 iniset /etc/ceilometer/ceilometer.conf  service_credentials region_name 'RegionOne'
 iniset /etc/ceilometer/ceilometer.conf  service_credentials endpoint_type 'internalURL'
 
-iniset /etc/ceilometer/ceilometer.conf dispatcher_http target "${leap_qradar_endpoint}"
-iniset /etc/ceilometer/ceilometer.conf dispatcher_http event_target "${leap_qradar_endpoint}"
-iniset /etc/ceilometer/ceilometer.conf dispatcher_http cadf_only "${leap_cadf_only}"
+#iniset /etc/ceilometer/ceilometer.conf dispatcher_http target "${leap_qradar_endpoint}"
+#iniset /etc/ceilometer/ceilometer.conf dispatcher_http event_target "${leap_qradar_endpoint}"
+#iniset /etc/ceilometer/ceilometer.conf dispatcher_http cadf_only "${leap_cadf_only}"
 
 iniset /etc/ceilometer/ceilometer.conf meter meter_definitions_cfg_file '/etc/ceilometer/meters.yaml'
 
@@ -49,13 +49,13 @@ iniset /etc/ceilometer/ceilometer.conf notification store_events false
 
 iniset /etc/ceilometer/ceilometer.conf publisher_notifier metering_topic 'metering'
 
-cp /onvm/conf/meters.yaml /etc/ceilometer/meters.yaml
-cp /onvm/conf/pipeline.yaml /etc/ceilometer/pipeline.yaml
+#cp /onvm/conf/meters.yaml /etc/ceilometer/meters.yaml
+#cp /onvm/conf/pipeline.yaml /etc/ceilometer/pipeline.yaml
 
-chmod +x /onvm/conf/getpath.py
-c_dir=`/onvm/conf/getpath.py`
+#chmod +x /onvm/conf/getpath.py
+#c_dir=`/onvm/conf/getpath.py`
 
-cp /onvm/conf/http.py $c_dir/dispatcher/http.py
+#cp /onvm/conf/http.py $c_dir/dispatcher/http.py
 
 iniremcomment /etc/ceilometer/ceilometer.conf
 

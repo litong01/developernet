@@ -14,9 +14,9 @@ if [ "$leap_uselocalrepo" != 'yes' ]; then
   add-apt-repository -y cloud-archive:mitaka
 fi
 apt-key update
-apt-get -qqy update
-apt-get -qqy install python-openstackclient
-apt-get -qqy install chrony
+apt-get update
+apt-get -qqy $leap_aptopt install python-openstackclient
+apt-get -qqy $leap_aptopt install chrony
 
 sed -i '/^server /d' /etc/chrony/chrony.conf
 

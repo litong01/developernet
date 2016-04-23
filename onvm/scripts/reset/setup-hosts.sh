@@ -19,6 +19,7 @@ if [ ! "$sp" ];then
 
   if [ "$leap_uselocalrepo" = 'yes' ]; then
     cp /onvm/conf/sources.list /etc/apt
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5EDB1B62EC4926EA
   fi
 
   echo 'Setting up hostname'

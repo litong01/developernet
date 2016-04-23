@@ -103,7 +103,7 @@ unset OS_IDENTITY_API_VERSION
 echo "Set up endpoints for glance, cinder, nova, heat, ceilometer and neutron"
 
 source ~/admin-openrc.sh
-for key in keystone neutron nova glance cinder heat ceilometer; do
+for key in keystone neutron nova glance cinder heat; do
   openstack user create --domain default --password $1 $key
   openstack role add --project service --user $key admin
 done
@@ -126,11 +126,11 @@ openstack endpoint create --region RegionOne network public http://$pub_ip:9696
 openstack endpoint create --region RegionOne network internal http://$leap_logical2physical_neutron:9696
 openstack endpoint create --region RegionOne network admin http://$leap_logical2physical_neutron:9696
 
-openstack service create --name ceilometer --description "OpenStack Telemetry" metering
-eval pub_ip=\$leap_${leap_logical2physical_ceilometer}_eth0; pub_ip=`echo $pub_ip`
-openstack endpoint create --region RegionOne metering public http://$pub_ip:8777
-openstack endpoint create --region RegionOne metering internal http://$leap_logical2physical_ceilometer:8777
-openstack endpoint create --region RegionOne metering admin http://$leap_logical2physical_ceilometer:8777
+#openstack service create --name ceilometer --description "OpenStack Telemetry" metering
+#eval pub_ip=\$leap_${leap_logical2physical_ceilometer}_eth0; pub_ip=`echo $pub_ip`
+#openstack endpoint create --region RegionOne metering public http://$pub_ip:8777
+#openstack endpoint create --region RegionOne metering internal http://$leap_logical2physical_ceilometer:8777
+#openstack endpoint create --region RegionOne metering admin http://$leap_logical2physical_ceilometer:8777
 
 
 openstack service create --name cinder --description "OpenStack Block Storage" volume
