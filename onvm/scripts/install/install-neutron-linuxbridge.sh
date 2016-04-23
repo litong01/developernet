@@ -51,8 +51,8 @@ iniset /etc/neutron/neutron.conf DEFAULT nova_url "http://${leap_logical2physica
 
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf nova auth_type 'password'
-iniset /etc/neutron/neutron.conf nova project_domain_id 'default'
-iniset /etc/neutron/neutron.conf nova user_domain_id 'default'
+iniset /etc/neutron/neutron.conf nova project_domain_name 'default'
+iniset /etc/neutron/neutron.conf nova user_domain_name 'default'
 iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
 iniset /etc/neutron/neutron.conf nova project_name 'service'
 iniset /etc/neutron/neutron.conf nova username 'nova'
@@ -127,8 +127,8 @@ iniset /etc/neutron/metadata_agent.ini DEFAULT auth_uri "http://${leap_logical2p
 iniset /etc/neutron/metadata_agent.ini DEFAULT auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/metadata_agent.ini DEFAULT auth_region 'RegionOne'
 iniset /etc/neutron/metadata_agent.ini DEFAULT auth_type 'password'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_id 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_id 'default'
+iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_name 'default'
+iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_name 'default'
 iniset /etc/neutron/metadata_agent.ini DEFAULT project_name 'service'
 iniset /etc/neutron/metadata_agent.ini DEFAULT username 'neutron'
 iniset /etc/neutron/metadata_agent.ini DEFAULT password $1

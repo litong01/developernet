@@ -58,8 +58,8 @@ iniset /etc/nova/nova.conf keystone_authtoken password $1
 iniset /etc/nova/nova.conf neutron url http://$leap_logical2physical_neutron:9696
 iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone:35357
 iniset /etc/nova/nova.conf neutron auth_type 'password'
-iniset /etc/nova/nova.conf neutron project_domain_id 'default'
-iniset /etc/nova/nova.conf neutron user_domain_id 'default'
+iniset /etc/nova/nova.conf neutron project_domain_name 'default'
+iniset /etc/nova/nova.conf neutron user_domain_name 'default'
 iniset /etc/nova/nova.conf neutron region_name 'RegionOne'
 iniset /etc/nova/nova.conf neutron project_name 'service'
 iniset /etc/nova/nova.conf neutron username 'neutron'

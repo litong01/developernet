@@ -109,8 +109,8 @@ iniset /etc/neutron/neutron.conf DEFAULT nova_url "http://${leap_logical2physica
 
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf nova auth_type 'password'
-iniset /etc/neutron/neutron.conf nova project_domain_id 'default'
-iniset /etc/neutron/neutron.conf nova user_domain_id 'default'
+iniset /etc/neutron/neutron.conf nova project_domain_name 'default'
+iniset /etc/neutron/neutron.conf nova user_domain_name 'default'
 iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
 iniset /etc/neutron/neutron.conf nova project_name 'service'
 iniset /etc/neutron/neutron.conf nova username 'nova'

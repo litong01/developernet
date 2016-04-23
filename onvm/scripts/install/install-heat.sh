@@ -40,8 +40,8 @@ iniset /etc/heat/heat.conf keystone_authtoken password $1
 iniset /etc/heat/heat.conf trustee auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/heat/heat.conf trustee auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/heat/heat.conf trustee auth_type 'password'
-iniset /etc/heat/heat.conf trustee project_domain_id 'default'
-iniset /etc/heat/heat.conf trustee user_domain_id 'default'
+iniset /etc/heat/heat.conf trustee project_domain_name 'default'
+iniset /etc/heat/heat.conf trustee user_domain_name 'default'
 iniset /etc/heat/heat.conf trustee project_name 'service'
 iniset /etc/heat/heat.conf trustee username 'heat'
 iniset /etc/heat/heat.conf trustee password $1
