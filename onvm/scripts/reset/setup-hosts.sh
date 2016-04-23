@@ -4,7 +4,8 @@
 # $3 public ip eth1
 # $4 chrony server hostname
 
-echo "Setting up eth1..."
+source /onvm/scripts/ini-config
+eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
 sp=$(grep $1 /etc/hosts)
 if [ ! "$sp" ];then
@@ -15,7 +16,10 @@ if [ ! "$sp" ];then
 
   sed -i '/^127.0.1.1/d' /etc/hosts
   cat /onvm/conf/hosts >> /etc/hosts
-  cp /onvm/conf/sources.list /etc/apt
+
+  if [ "$leap_uselocalrepo" = 'yes' ]; then
+    cp /onvm/conf/sources.list /etc/apt
+  fi
 
   echo 'Setting up hostname'
   echo -e "$1" > /etc/hostname

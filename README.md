@@ -113,7 +113,11 @@ following::
         ln -s /apt-mirror/mirror/archive.ubuntu.com/ubuntu ubuntu
         ln -s /apt-mirror/mirror/ubuntu-cloud.archive.canonical.com/ubuntu/ cubuntu
 
-   The second one was to support openstack liberty packages.
+   The second one was to support openstack mitaka packages.
+   Also create the postmirror.sh file and make it executable::
+
+        cat '/apt-mirror/var/clean.sh' > /apt-mirror/var/postmirror.sh
+        chmod +x /apt-mirror/var/postmirror.sh
 
 7. For the machines which want to use this local apt repository, change the
    /etc/apt/source.list like the following::
@@ -126,7 +130,7 @@ following::
         deb-src http://repoIP/ubuntu trusty-security main restricted universe multiverse
         deb-src http://repoIP/ubuntu trusty-updates main restricted universe multiverse
 
-        deb http://repoIP/cubuntu trusty-updates/liberty main
+        deb http://repoIP/cubuntu trusty-updates/mitaka main
 
    Use your local apt repository server IP to replace repoIP in the above
    strings, or setup repoIP in your /etc/hosts. 

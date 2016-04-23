@@ -1,3 +1,4 @@
-vboxmanage controlvm h2-compute01 acpipowerbutton
-vboxmanage controlvm h2-nova acpipowerbutton
-vboxmanage controlvm h2-controller acpipowerbutton
+vboxmanage controlvm os-controller acpipowerbutton
+vboxmanage controlvm os-neutron acpipowerbutton
+vboxmanage controlvm os-compute01 acpipowerbutton
+vboxmanage controlvm os-compute02 acpipowerbutton
