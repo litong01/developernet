@@ -15,6 +15,14 @@ apt-get install -qqy "$leap_aptopt" neutron-server vlan neutron-plugin-ml2 \
 
 echo "Neutron packages are installed!"
 
+service neutron-server stop
+service neutron-plugin-openvswitch-agent stop
+service neutron-dhcp-agent stop
+service neutron-metadata-agent stop
+service neutron-l3-agent stop
+service openvswitch-switch stop
+
+
 # Configre /etc/neutron/neutron.conf
 echo "Configure the server component"
 
@@ -150,14 +158,14 @@ su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
 
 
-service openvswitch-switch restart
+service openvswitch-switch start
 ovs-vsctl add-br br-ex
 
-service neutron-server restart
-service neutron-plugin-openvswitch-agent restart
-service neutron-dhcp-agent restart
-service neutron-metadata-agent restart
-service neutron-l3-agent restart
+service neutron-server start
+service neutron-plugin-openvswitch-agent start
+service neutron-dhcp-agent start
+service neutron-metadata-agent start
+service neutron-l3-agent start
 
 
 echo "Adding public nic to ovs bridge..."
