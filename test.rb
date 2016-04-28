@@ -11,6 +11,13 @@ else
   puts 'cooo'
 end
 
-syncednodes = []
-syncednodes.index('whatever')
-syncednodes.push('aaaa')
+syncednodes = nodes['synchfolders']['ovs']['nodes']
+puts syncednodes
+bb = syncednodes.index('controller')
+if bb
+  puts bb, ' is'
+  syncednodes = syncednodes.delete(bb)
+else
+  puts bb, 'not'
+end
+puts syncednodes

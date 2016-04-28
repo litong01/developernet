@@ -84,7 +84,7 @@ aptopt: --force-yes
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: linuxbridge
+network: ovs
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
@@ -94,7 +94,7 @@ synchfolders:
     nodes: [nova, compute01]
   ovs: 
     folder: ../cloudimages
-    nodes: [controller]
+    nodes: [keystone]
   linuxbridge:
     folder: ../cloudimages
-    nodes: [controller]
+    nodes: [keystone]

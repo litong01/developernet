@@ -8,7 +8,7 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
-apt-get install -qqy "$leap_aptopt" neutron-plugin-openvswitch-agent
+apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent
 
 echo "Compute packages are installed!"
 
@@ -112,30 +112,35 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
 
-# Configure Modular Layer 2 agent /etc/neutron/plugins/ml2/ml2_conf.ini
-echo "Configure Modular Layer 2 (ML2) plug-in"
-
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'flat,vxlan'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types 'vxlan'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers "ovs,l2population"
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers 'port_security'
-
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group 'True'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
-
+# Configure Modular Layer 2 agent /etc/neutron/plugins/ml2/openvswitch_agent.ini
 echo "Configure openvswitch agent"
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs local_ip $3
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs enable_tunneling True
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs integration_bridge br-int
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs tunnel_bridge br-tun
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 type_drivers 'flat,vxlan'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 tenant_network_types 'vxlan'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 mechanism_drivers "ovs"
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 extension_drivers 'port_security'
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent l2_population True
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini agent tunnel_types vxlan
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_flat flat_networks 'public'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_vxlan vni_ranges '1:1000'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_vxlan vxlan_group '239.1.1.1'
+
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan enable_vxlan 'True'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan l2_population 'False'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan vxlan_group '239.1.1.1'
+
+
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_security_group 'True'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_ipset 'True'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
+
+#iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_types vxlan
 
 
 # Configure the kernel to enable packet forwarding and disable reverse path filting
@@ -150,13 +155,13 @@ sysctl -p
 
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
-iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
+iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
 
 
 rm -f /var/lib/nova/nova.sqlite
 
 service nova-compute restart
 service openvswitch-switch restart
-service neutron-plugin-openvswitch-agent restart
+service neutron-openvswitch-agent restart
 
 echo "Compute setup is now complete!"

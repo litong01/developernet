@@ -38,7 +38,7 @@ Vagrant.configure("2") do |config|
       config.vm.define "#{key}" do |node|
         nodekey = nodes['logical2physical'][key]
 
-        if sync_cfg['nodes'].index(nodekey)
+        if sync_cfg['nodes'].index(key)
           node.vm.synced_folder sync_cfg['folder'], "/leapbin", disabled: false, create: true
         end
 
