@@ -1,59 +1,39 @@
 ---
-mysqldb:
-  host_name: mysqldb.leap.dev
-  eth0: 9.30.107.132
-  eth1: 192.168.1.132
-
-keystone:
-  host_name: keystone.leap.dev
-  eth0: 9.30.107.133
-  eth1: 192.168.1.133
-
-glance:
-  host_name: glance.leap.dev
-  eth0: 9.30.107.134
-  eth1: 192.168.1.134
-
-neutron:
-  host_name: neutron.leap.dev
-  eth0: 9.30.107.135
-  eth1: 192.168.1.135
-
-nova:
-  host_name: nova.leap.dev
-  eth0: 9.30.107.136
-  eth1: 192.168.1.136
+controller:
+  host_name: controller.leap.dev
+  eth0: 9.30.217.4
+  eth1: 192.168.217.4
 
 compute01:
   host_name: compute01.leap.dev
-  eth0: 9.30.107.137
-  eth1: 192.168.1.137
+  eth0: 9.30.217.5
+  eth1: 192.168.217.5
 
 compute02:
   host_name: compute02.leap.dev
-  eth0: 9.30.107.138
-  eth1: 192.168.1.138
+  eth0: 9.30.217.6
+  eth1: 192.168.217.6
 
 compute03:
   host_name: compute03.leap.dev
-  eth0: 9.30.107.139
-  eth1: 192.168.1.139
+  eth0: 9.30.217.7
+  eth1: 192.168.217.7
 
 compute04:
   host_name: compute04.leap.dev
-  eth0: 9.30.107.140
-  eth1: 192.168.1.140
+  eth0: 9.30.217.8
+  eth1: 192.168.217.8
 
 compute05:
   host_name: compute05.leap.dev
-  eth0: 9.30.107.141
-  eth1: 192.168.1.141
+  eth0: 9.30.217.9
+  eth1: 192.168.217.9
 
 public_net:
-  cidr: 9.30.107.128/26
-  start_ip: 9.30.107.152
-  end_ip: 9.30.107.184
-  gateway: 9.30.107.129
+  cidr: 9.30.217.1/26
+  start_ip: 9.30.217.16
+  end_ip: 9.30.217.62
+  gateway: 9.30.217.1
 
 
 # Logical node to physical node mapping, if you like to use one physical
@@ -61,15 +41,15 @@ public_net:
 # physical node. The following setup uses one machine named keystone to run
 # keystone, rabbitmq and horizon services.
 logical2physical:
-  mysqldb: mysqldb
-  keystone: keystone
-  rabbitmq: keystone
-  horizon: keystone
-  glance: glance
-  cinder: glance
-  neutron: neutron
-  nova: nova
-  heat: nova
+  mysqldb: controller
+  keystone: controller
+  rabbitmq: controller
+  horizon: controller
+  glance: controller
+  cinder: controller
+  neutron: controller
+  nova: controller
+  heat: controller
 
 # Define how many logical nodes and the sequence of the installation
 ctlnodes:
@@ -96,7 +76,7 @@ suffixes:
 
 timezone: America\/Los_Angeles
 
-cindervg: vg02
+cindervg: vg00
 
 glance_image_location: /storage/images
 
@@ -112,7 +92,7 @@ aptopt: --force-yes
 
 # The supported network types are openvswitch, linuxbridge and ovn
 #
-network: ovs
+network: linuxbridge
 
 
 # The nodes should be a list of logical name

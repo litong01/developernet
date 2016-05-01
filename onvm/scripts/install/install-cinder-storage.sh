@@ -11,8 +11,6 @@ apt-get install -qqy "$leap_aptopt" cinder-volume python-mysqldb
 
 echo "Cinder storage packages are installed!"
 
-vgname=$(vgdisplay | awk 'NR==2 { print $3 }')
-
 iniset /etc/cinder/cinder.conf database connection mysql+pymysql://cinder:$1@$leap_logical2physical_mysqldb/cinder
 iniset /etc/cinder/cinder.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/cinder/cinder.conf DEFAULT debug 'True'

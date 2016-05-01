@@ -47,7 +47,9 @@ Vagrant.configure("2") do |config|
      pnodes.keys.each do |key|
         file.puts nodes[key]['eth1'] + "\t" + key
      end
-     file.puts nodes['repo']['eth1'] + "\t" + 'repo'
+     if nodes['repo']
+        file.puts nodes['repo']['eth1'] + "\t" + 'repo'
+     end
   end
 
   tstamp = Time.now.strftime("%Y%m%d-%H%M")
