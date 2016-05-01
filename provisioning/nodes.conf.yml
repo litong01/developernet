@@ -90,6 +90,8 @@ uselocalrepo: no
 
 aptopt: --force-yes
 
+instances_path: /var/lib/nova/instances
+
 # The supported network types are openvswitch, linuxbridge and ovn
 #
 network: linuxbridge

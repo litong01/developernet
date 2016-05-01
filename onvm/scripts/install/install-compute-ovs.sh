@@ -26,6 +26,8 @@ iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirew
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/nova/nova.conf DEFAULT metadata_host $metahost
+iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
+
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '0.0.0.0'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'

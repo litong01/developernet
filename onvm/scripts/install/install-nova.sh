@@ -30,7 +30,10 @@ iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
 iniset /etc/nova/nova.conf DEFAULT notification_topics notifications
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
+iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
+
 inidelete /etc/nova/nova.conf DEFAULT ec2_private_dns_show_ip
+
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '$my_ip'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
