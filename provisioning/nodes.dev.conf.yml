@@ -76,7 +76,7 @@ ntpserver: mysqldb
 
 backuphost: nova
 
-pubnic: eth2
+pubnic: eth0
 
 uselocalrepo: yes
 
