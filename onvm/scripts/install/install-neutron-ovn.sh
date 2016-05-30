@@ -7,13 +7,14 @@ source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get update
 
-echo "racoon racoon/config_mode select direct" | debconf-set-selections
+#echo "racoon racoon/config_mode select direct" | debconf-set-selections
 
-apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
-apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
-  debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
-  python-qt4 python-twisted-conch python-zopeinterface python-six
-apt-get install -qqy "$leap_aptopt" racoon
+#apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
+#apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
+#  debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
+#  python-qt4 python-twisted-conch python-zopeinterface python-six
+#apt-get install -qqy "$leap_aptopt" racoon
+
 apt-get install -qqy git python-dev
 easy_install -U pip
 
@@ -22,16 +23,14 @@ echo 'All dependencies are now installed!'
 debloc='/leapbin'
 dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
-#dpkg -i "$debloc"/openvswitch-datapath-dkms_2.5.90-1_all.deb
-#dpkg -i "$debloc"/python-openvswitch_2.5.90-1_all.deb
-#dpkg -i "$debloc"/openvswitch-ipsec_2.5.90-1_amd64.deb
-#dpkg -i "$debloc"/openvswitch-pki_2.5.90-1_all.deb
-#dpkg -i "$debloc"/openvswitch-vtep_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-central_2.5.90-1_amd64.deb
-#dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
 
 echo 'All OVN packages are installed!'
+echo 'Grant permission to the ovsdb so others can access via eth1 interface'
+
+$ OVN Southbound database needs to be opened up to be accessed by compute nodes
+ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6642:$3
 
 echo 'Start openvswitch services'
 service openvswitch-switch restart

@@ -119,7 +119,7 @@ echo "Configure openvswitch agent"
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 type_drivers 'flat,vxlan'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 tenant_network_types 'vxlan'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 mechanism_drivers "ovs"
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 mechanism_drivers "openvswitch"
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 extension_drivers 'port_security'
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_flat flat_networks 'public'

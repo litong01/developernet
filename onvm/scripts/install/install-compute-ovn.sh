@@ -7,18 +7,26 @@ source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get update
 
-echo "racoon racoon/config_mode select direct" | debconf-set-selections
+#echo "racoon racoon/config_mode select direct" | debconf-set-selections
+#
+#apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
+#apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
+#  debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
+#  python-qt4 python-twisted-conch python-zopeinterface python-six
 
-apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
-apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
-  debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
-  python-qt4 python-twisted-conch python-zopeinterface python-six
-
+echo 'Install OVN from the local build'
 debloc='/leapbin'
 dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
+
+neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
+eval neutronhost=$neutronhost
+
+ovs-vsctl set open . external-ids:ovn-remote=tcp:$neutronhost:6642
+ovs-vsctl set open . external-ids:ovn-encap-type=geneve,vxlan
+ovs-vsctl set open . external-ids:ovn-encap-ip=$3
 
 service openvswitch-switch restart
 service ovn-host restart
