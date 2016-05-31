@@ -2,27 +2,27 @@
 repo:
   host_name: repo.leap.dev
   eth0: 192.168.1.40
-  eth1: 192.168.15.18
+  eth1: 10.0.2.40
 
 controller:
   host_name: controller.leap.dev
   eth0: 192.168.1.37
-  eth1: 192.168.15.37
+  eth1: 10.0.2.37
 
 neutron:
   host_name: neutron.leap.dev
   eth0: 192.168.1.38
-  eth1: 192.168.15.38
+  eth1: 10.0.2.38
 
 compute01:
   host_name: compute01.leap.dev
   eth0: 192.168.1.22
-  eth1: 192.168.15.22
+  eth1: 10.0.2.22
 
 compute02:
   host_name: compute02.leap.dev
   eth0: 192.168.1.39
-  eth1: 192.168.15.39
+  eth1: 10.0.2.39
 
 public_net:
   cidr: 192.168.1.1/24
@@ -78,7 +78,7 @@ backuphost: nova
 
 pubnic: eth0
 
-uselocalrepo: yes
+uselocalrepo: no
 
 aptopt: --force-yes
 
@@ -86,14 +86,14 @@ instances_path: /var/lib/nova/instances
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: linuxbridge
+network: ovn
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
 synchfolders:
   ovn: 
     folder: ovnbin/debian1404.ovs2.5.90
-    nodes: [nova, compute01]
+    nodes: [neutron, compute01, compute02]
   ovs: 
     folder: ../cloudimages
     nodes: [keystone]

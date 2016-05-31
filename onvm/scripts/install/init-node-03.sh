@@ -5,14 +5,18 @@
 # $4 public net end_ip
 # $5 public net gateway
 
-echo "Setting security rules for demo project..."
+eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
-source ~/demo-openrc.sh
+if [ "$leap_network" != 'ovn' ]; then
+  echo "Setting security rules for demo project..."
 
-neutron security-group-rule-create --direction ingress --protocol icmp --remote-ip-prefix 0.0.0.0/0 default
-neutron security-group-rule-create --direction egress --protocol icmp --remote-ip-prefix 0.0.0.0/0 default
+  source ~/demo-openrc.sh
 
-neutron security-group-rule-create --direction ingress --protocol tcp \
-  --port-range-min 22 --port-range-max 22 --remote-ip-prefix 0.0.0.0/0 default
+  neutron security-group-rule-create --direction ingress --protocol icmp --remote-ip-prefix 0.0.0.0/0 default
+  neutron security-group-rule-create --direction egress --protocol icmp --remote-ip-prefix 0.0.0.0/0 default
+
+  neutron security-group-rule-create --direction ingress --protocol tcp \
+    --port-range-min 22 --port-range-max 22 --remote-ip-prefix 0.0.0.0/0 default
+fi
 
 echo "Init-node-03 is now complete!"

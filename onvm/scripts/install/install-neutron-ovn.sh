@@ -29,7 +29,10 @@ dpkg -i "$debloc"/ovn-central_2.5.90-1_amd64.deb
 echo 'All OVN packages are installed!'
 echo 'Grant permission to the ovsdb so others can access via eth1 interface'
 
-$ OVN Southbound database needs to be opened up to be accessed by compute nodes
+# OVN Northbound database needs open for neutron ovn plugin
+ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6641:$3
+
+# OVN Southbound database needs open to compute nodes
 ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6642:$3
 
 echo 'Start openvswitch services'
@@ -41,11 +44,10 @@ echo 'OVS OVN installation is now complete!'
 
 #============================================================
 echo 'Install Neutron Server...'
-#apt-get install -qqy "$leap_aptopt" neutron-server
-#rm -r -f /etc/neutron/plugins
 git clone https://github.com/openstack/neutron /opt/neutron
 cd /opt/neutron
 pip install -r requirements.txt
+pip install pymysql
 python setup.py install
 ./tools/generate_config_file_samples.sh
 
@@ -57,11 +59,14 @@ cp etc/rootwrap.conf /etc/neutron
 cp etc/neutron.conf.sample /etc/neutron/neutron.conf
 
 
-#===========================================================
+#========================================================================
 echo 'Install networking-ovn from source...'
 git clone https://github.com/openstack/networking-ovn /opt/networking-ovn
 cd /opt/networking-ovn
 pip install -r requirements.txt
+
+pip uninstall amqp
+pip install amqp==1.4.9
 
 python setup.py install
 
@@ -115,21 +120,74 @@ iniset /etc/neutron/neutron.conf nova project_name 'service'
 iniset /etc/neutron/neutron.conf nova username 'nova'
 iniset /etc/neutron/neutron.conf nova password $1
 
-# Configure /etc/neutron/plugins/networking-ovn/networking-ovn.ini
+# Configure /etc/neutron/plugins/networking-ovn/networking_ovn.ini
 echo "Configure OVN plugin"
 
-iniset /etc/neutron/plugins/networking-ovn/networking-ovn.ini ovn ovsdb_connection tcp:$3:6641
-iniset /etc/neutron/plugins/networking-ovn/networking-ovn.ini ovn ovn ovn_l3_mode True
+# networking ovn plugin should only access northbound database
+iniset /etc/neutron/plugins/networking-ovn/networking_ovn.ini ovn ovsdb_connection tcp:$3:6641
+iniset /etc/neutron/plugins/networking-ovn/networking_ovn.ini ovn ovn ovn_l3_mode True
+
+
+# Configure /etc/neutron/dhcp_agent.ini
+echo "Configure the DHCP agent"
+
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
+
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_agent_manager 'neutron.agent.dhcp_agent.DhcpAgentWithStateReport'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'openvswitch'
+
+iniset /etc/neutron/dhcp_agent.ini AGENT availability_zone nova
+iniset /etc/neutron/dhcp_agent.ini AGENT root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/dhcp_agent.ini AGENT root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+
+echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
+
+iniset /etc/neutron/rootwrap.conf DEFAULT filters_path '/etc/neutron/rootwrap.d'
+
+echo 'dhcp agent configuration is complete!'
+
+
+#Configure /etc/neutron/metadata_agent.ini
+echo 'Configure the metadata agent' 
+
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+eval metahost=$metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
+
+iniset /etc/neutron/metadata_agent.ini AGENT root_helper_daemon 'sudo /usr/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/metadata_agent.ini AGENT root_helper 'sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+
 
 # clean up configuration files
-
 iniremcomment /etc/neutron/neutron.conf
-iniremcomment /etc/neutron/plugins/networking-ovn/networking-ovn.ini
+iniremcomment /etc/neutron/plugins/networking-ovn/networking_ovn.ini
+iniremcomment /etc/neutron/dhcp_agent.ini
+iniremcomment /etc/neutron/metadata_agent.ini
 
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/networking-ovn/networking-ovn.ini upgrade head" neutron
+  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini upgrade head"
 
-service neutron-server restart
+mkdir -p /var/log/neutron
+
+neutron-server --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini \
+  --logfile /var/log/neutron/server.log > /dev/null 2>&1 &
+
+neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini \
+  --config-file /etc/neutron/dhcp_agent.ini \
+  --logfile /var/log/neutron/dhcp.log > /dev/null 2>&1 &
+
+neutron-metadata-agent --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini \
+  --config-file /etc/neutron/metadata_agent.ini \
+  --logfile /var/log/neutron/metadata.log > /dev/null 2>&1 &
+
 
 rm -f /var/lib/neutron/neutron.sqlite
 

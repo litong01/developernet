@@ -20,16 +20,20 @@ neutron net-create internet --shared --router:external True \
 neutron subnet-create internet $2 --name internet-subnet --allocation-pool \
   start=$3,end=$4 --dns-nameserver 8.8.4.4 --gateway $5 --disable-dhcp
 
-source ~/demo-openrc.sh
-neutron net-create demonet
+eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
-neutron subnet-create demonet 10.0.10.0/24 --name demonet-subnet \
-  --dns-nameserver 8.8.4.4 --gateway 10.0.10.1
+if [ "$leap_network" != 'ovn' ]; then
+  source ~/demo-openrc.sh
+  neutron net-create demonet
 
-neutron router-create demo-router
+  neutron subnet-create demonet 10.0.10.0/24 --name demonet-subnet \
+    --dns-nameserver 8.8.4.4 --gateway 10.0.10.1
 
-neutron router-interface-add demo-router demonet-subnet
+  neutron router-create demo-router
 
-neutron router-gateway-set demo-router internet
+  neutron router-interface-add demo-router demonet-subnet
+
+  neutron router-gateway-set demo-router internet
+fi
 
 echo "Init-node-01 is now complete!"
