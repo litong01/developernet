@@ -11,7 +11,8 @@ apt-get update
 # what network to use
 apt-get install -qqy "$leap_aptopt" neutron-server neutron-plugin-ml2 \
   neutron-linuxbridge-agent neutron-l3-agent neutron-dhcp-agent \
-  neutron-metadata-agent python-neutronclient
+  neutron-metadata-agent haproxy neutron-lbaas-agent \
+  python-neutronclient
 
 echo "Neutron packages are installed!"
 
@@ -20,6 +21,7 @@ service neutron-linuxbridge-agent stop
 service neutron-dhcp-agent stop
 service neutron-metadata-agent stop
 service neutron-l3-agent stop
+service neutron-lbaas-agent stop
 
 
 # Configre /etc/neutron/neutron.conf
@@ -27,7 +29,7 @@ echo "Configure the server component"
 
 iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'ml2'
-iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router'
+iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router,lbaas'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
@@ -166,6 +168,13 @@ inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
 
+# Configuring load balancer
+iniset /etc/neutron/neutron.conf service_providers service_provider 'LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default'
+iniset /etc/neutron/neutron_lbaas.conf service_providers service_provider 'LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default'
+iniset /etc/neutron/lbaas_agent.ini DEFAULT device_driver 'neutron_lbaas.services.loadbalancer.drivers.haproxy.namespace_driver.HaproxyNSDriver'
+iniset /etc/neutron/lbaas_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
+
+
 # clean up configuration files
 
 iniremcomment /etc/neutron/neutron.conf
@@ -174,17 +183,21 @@ iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/dhcp_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
+iniremcomment /etc/neutron/neutron_lbaas.conf
+iniremcomment /etc/neutron/lbaas_agent.ini
 
 
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
 
+neutron-db-manage --service lbaas upgrade head
 
 service neutron-server start
 service neutron-linuxbridge-agent start
 service neutron-dhcp-agent start
 service neutron-metadata-agent start
 service neutron-l3-agent start
+service neutron-lbaas-agent start
 
 rm -f /var/lib/neutron/neutron.sqlite
 

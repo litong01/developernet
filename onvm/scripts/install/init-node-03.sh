@@ -5,6 +5,7 @@
 # $4 public net end_ip
 # $5 public net gateway
 
+source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
 if [ "$leap_network" != 'ovn' ]; then
