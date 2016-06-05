@@ -16,8 +16,8 @@ neutron:
 
 compute01:
   host_name: compute01.leap.dev
-  eth0: 192.168.1.22
-  eth1: 10.0.2.22
+  eth0: 192.168.1.31
+  eth1: 10.0.2.31
 
 compute02:
   host_name: compute02.leap.dev
@@ -86,7 +86,7 @@ instances_path: /var/lib/nova/instances
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: linuxbridge
+network: ovn
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root

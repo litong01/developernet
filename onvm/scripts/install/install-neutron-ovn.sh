@@ -7,14 +7,6 @@ source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get update
 
-#echo "racoon racoon/config_mode select direct" | debconf-set-selections
-
-#apt-get install -qqy "$leap_aptopt" dkms ipsec-tools debconf-utils
-#apt-get install -qqy "$leap_aptopt" graphviz autoconf automake bzip2 \
-#  debhelper dh-autoreconf libssl-dev libtool openssl procps python-all \
-#  python-qt4 python-twisted-conch python-zopeinterface python-six
-#apt-get install -qqy "$leap_aptopt" racoon
-
 apt-get install -qqy git python-dev
 easy_install -U pip
 
@@ -51,7 +43,7 @@ pip install pymysql
 python setup.py install
 ./tools/generate_config_file_samples.sh
 
-mkdir -p /etc/neutron/plugins/networking-ovn
+mkdir -p /etc/neutron/plugins/ml2
 cp -r etc/neutron/* /etc/neutron
 cp etc/api-paste.ini /etc/neutron
 cp etc/policy.json /etc/neutron
@@ -65,8 +57,8 @@ git clone https://github.com/openstack/networking-ovn /opt/networking-ovn
 cd /opt/networking-ovn
 pip install -r requirements.txt
 
-pip uninstall amqp
-pip install amqp==1.4.9
+#pip uninstall amqp
+#pip install amqp==1.4.9
 
 python setup.py install
 
@@ -76,14 +68,17 @@ echo "Neutron and ovn packages are installed!"
 echo "Configure the server component"
 
 iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
-iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'networking_ovn.plugin.OVNPlugin'
-iniset /etc/neutron/neutron.conf DEFAULT service_plugins "qos"
+iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'neutron.plugins.ml2.plugin.Ml2Plugin'
+iniset /etc/neutron/neutron.conf DEFAULT service_plugins "networking_ovn.l3.l3_ovn.OVNL3RouterPlugin"
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT bind_host '0.0.0.0'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT network_scheduler_driver 'neutron.scheduler.dhcp_agent_scheduler.AZAwareWeightScheduler'
+
+iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
+iniset /etc/neutron/neutron.conf ovn ovsdb_connection tcp:$3:6641
 
 iniset /etc/neutron/neutron.conf agent root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
 iniset /etc/neutron/neutron.conf agent root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
@@ -92,6 +87,9 @@ iniset /etc/neutron/neutron.conf agent root_helper 'sudo /usr/local/bin/neutron-
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+
+mkdir -p /var/lib/neutron
+iniset /etc/neutron/neutron.conf oslo_concurrency lock_path /var/lib/neutron
 
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
@@ -120,74 +118,30 @@ iniset /etc/neutron/neutron.conf nova project_name 'service'
 iniset /etc/neutron/neutron.conf nova username 'nova'
 iniset /etc/neutron/neutron.conf nova password $1
 
-# Configure /etc/neutron/plugins/networking-ovn/networking_ovn.ini
+# Configure /etc/neutron/plugins/ml2/ml2_conf.ini
 echo "Configure OVN plugin"
 
-# networking ovn plugin should only access northbound database
-iniset /etc/neutron/plugins/networking-ovn/networking_ovn.ini ovn ovsdb_connection tcp:$3:6641
-iniset /etc/neutron/plugins/networking-ovn/networking_ovn.ini ovn ovn ovn_l3_mode True
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types vxlan
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers port_security
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'local,flat,vlan,gre,vxlan'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers 'ovn,logger'
 
-
-# Configure /etc/neutron/dhcp_agent.ini
-echo "Configure the DHCP agent"
-
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
-
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_agent_manager 'neutron.agent.dhcp_agent.DhcpAgentWithStateReport'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'openvswitch'
-
-iniset /etc/neutron/dhcp_agent.ini AGENT availability_zone nova
-iniset /etc/neutron/dhcp_agent.ini AGENT root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
-iniset /etc/neutron/dhcp_agent.ini AGENT root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
-
-echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
-
-iniset /etc/neutron/rootwrap.conf DEFAULT filters_path '/etc/neutron/rootwrap.d'
-
-echo 'dhcp agent configuration is complete!'
-
-
-#Configure /etc/neutron/metadata_agent.ini
-echo 'Configure the metadata agent' 
-
-metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
-eval metahost=$metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
-
-iniset /etc/neutron/metadata_agent.ini AGENT root_helper_daemon 'sudo /usr/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
-iniset /etc/neutron/metadata_agent.ini AGENT root_helper 'sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_gre tunnel_id_ranges '1:1000'
 
 
 # clean up configuration files
 iniremcomment /etc/neutron/neutron.conf
-iniremcomment /etc/neutron/plugins/networking-ovn/networking_ovn.ini
-iniremcomment /etc/neutron/dhcp_agent.ini
-iniremcomment /etc/neutron/metadata_agent.ini
+iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini upgrade head"
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head"
 
 mkdir -p /var/log/neutron
 
 neutron-server --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini \
   --logfile /var/log/neutron/server.log > /dev/null 2>&1 &
-
-neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini \
-  --config-file /etc/neutron/dhcp_agent.ini \
-  --logfile /var/log/neutron/dhcp.log > /dev/null 2>&1 &
-
-neutron-metadata-agent --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/networking-ovn/networking_ovn.ini \
-  --config-file /etc/neutron/metadata_agent.ini \
-  --logfile /var/log/neutron/metadata.log > /dev/null 2>&1 &
-
 
 rm -f /var/lib/neutron/neutron.sqlite
 

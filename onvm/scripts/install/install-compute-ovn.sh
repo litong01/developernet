@@ -7,6 +7,10 @@ source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get update
 
+apt-get install -qqy git python-dev
+easy_install -U pip
+
+
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 
 echo "Compute packages are installed!"
@@ -84,6 +88,8 @@ debloc='/leapbin'
 dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
+dpkg -i "$debloc"/python-openvswitch_2.5.90-1_all.deb
+dpkg -i "$debloc"/openvswitch-vtep_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
 
 neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
@@ -100,3 +106,72 @@ service openvswitch-switch restart
 service ovn-host restart
 
 echo 'Services on compute node started!'
+
+
+echo 'Install DHCP & Metadata Agents...'
+git clone https://github.com/openstack/neutron /opt/neutron
+cd /opt/neutron
+pip install -r requirements.txt
+pip install pymysql
+python setup.py install
+./tools/generate_config_file_samples.sh
+
+mkdir -p /etc/neutron/plugins/ml2
+cp -r etc/neutron/* /etc/neutron
+cp etc/api-paste.ini /etc/neutron
+cp etc/policy.json /etc/neutron
+cp etc/rootwrap.conf /etc/neutron
+cp etc/neutron.conf.sample /etc/neutron/neutron.conf
+
+iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+
+
+# Configure /etc/neutron/dhcp_agent.ini
+echo "Configure the DHCP agent"
+
+iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_metadata_network 'False'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT debug 'True'
+
+iniset /etc/neutron/dhcp_agent.ini DEFAULT ovs_use_veth 'False'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'openvswitch'
+
+iniset /etc/neutron/dhcp_agent.ini AGENT availability_zone nova
+iniset /etc/neutron/dhcp_agent.ini AGENT root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/dhcp_agent.ini AGENT root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+
+echo 'dhcp-option-force=26,1442' > /etc/neutron/dnsmasq-neutron.conf
+
+iniset /etc/neutron/rootwrap.conf DEFAULT filters_path '/etc/neutron/rootwrap.d'
+
+echo 'dhcp agent configuration is complete!'
+
+#Configure /etc/neutron/metadata_agent.ini
+echo 'Configure the metadata agent' 
+
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+eval metahost=$metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
+
+iniset /etc/neutron/metadata_agent.ini AGENT root_helper_daemon 'sudo /usr/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/metadata_agent.ini AGENT root_helper 'sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+
+# clean up configuration files
+iniremcomment /etc/neutron/neutron.conf
+iniremcomment /etc/neutron/dhcp_agent.ini
+iniremcomment /etc/neutron/metadata_agent.ini
+
+mkdir -p /var/log/neutron
+
+neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/dhcp_agent.ini \
+  --logfile /var/log/neutron/dhcp.log > /dev/null 2>&1 &
+
+neutron-metadata-agent --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/metadata_agent.ini \
+  --logfile /var/log/neutron/metadata.log > /dev/null 2>&1 &
