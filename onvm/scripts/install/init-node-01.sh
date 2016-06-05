@@ -6,6 +6,7 @@
 # $5 public net gateway
 
 source /onvm/scripts/ini-config
+eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
 service apache2 restart
 
