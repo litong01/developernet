@@ -11,18 +11,19 @@ service apache2 restart
 
 echo "Setting up public and private network..."
 
-source ~/admin-openrc.sh
-
-neutron net-create internet --shared --router:external True \
-  --provider:physical_network public \
-  --provider:network_type flat
-
-neutron subnet-create internet $2 --name internet-subnet --allocation-pool \
-  start=$3,end=$4 --dns-nameserver 8.8.4.4 --gateway $5 --disable-dhcp
-
-eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
 if [ "$leap_network" != 'ovn' ]; then
+  source ~/admin-openrc.sh
+
+  neutron net-create internet --shared --router:external True \
+    --provider:physical_network public \
+    --provider:network_type flat
+
+  neutron subnet-create internet $2 --name internet-subnet --allocation-pool \
+    start=$3,end=$4 --dns-nameserver 8.8.4.4 --gateway $5 --disable-dhcp
+
+  eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
+
   source ~/demo-openrc.sh
   neutron net-create demonet
 
