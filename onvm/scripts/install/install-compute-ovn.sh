@@ -95,9 +95,27 @@ dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
 neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
 eval neutronhost=$neutronhost
 
-ovs-vsctl set open . external-ids:ovn-remote=tcp:$neutronhost:6642
-ovs-vsctl set open . external-ids:ovn-encap-type=geneve,vxlan
-ovs-vsctl set open . external-ids:ovn-encap-ip=$3
+echo 'Restarting openvswitch service'
+service openvswitch-switch restart
+echo 'Waiting for the services to start...'
+sleep 3
+
+ovs-vsctl --no-wait -- --may-exist add-br br-int
+ovs-vsctl --no-wait -- --may-exist add-br br-provider
+ovs-vsctl --no-wait -- --may-exist add-br br-vtep
+
+ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote=tcp:$neutronhost:6642
+ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
+#ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=geneve,vxlan
+ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=vxlan
+ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip=$3
+
+ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge-mappings=internet:br-provider
+
+#echo 'OpenVSwitch configuration is done.'
+
+vtep-ctl add-ps br-vtep
+vtep-ctl set Physical_Switch br-vtep tunnel_ips=$3
 
 echo 'OVN controller is now installed'
 
@@ -165,6 +183,20 @@ iniset /etc/neutron/metadata_agent.ini AGENT root_helper 'sudo /usr/bin/neutron-
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/dhcp_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
+
+
+echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
+confset /etc/sysctl.conf net.ipv4.ip_forward 1
+confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
+confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
+
+echo 'Load the new kernel configuration'
+sysctl -p
+
+
+echo "Adding public nic to ovs bridge..."
+br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
+ovs-vsctl add-port br-provider $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-provider $br_ex_ip
 
 mkdir -p /var/log/neutron
 
