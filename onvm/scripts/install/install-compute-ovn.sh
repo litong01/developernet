@@ -89,11 +89,18 @@ dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/python-openvswitch_2.5.90-1_all.deb
-dpkg -i "$debloc"/openvswitch-vtep_2.5.90-1_amd64.deb
+#dpkg -i "$debloc"/openvswitch-vtep_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
 
 neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
 eval neutronhost=$neutronhost
+
+
+echo "export OVN_NB_DB=tcp:$neutronhost:6641" >> ~/.bash_profile
+echo "export OVN_SB_DB=tcp:$neutronhost:6642" >> ~/.bash_profile
+export OVN_NB_DB=tcp:$neutronhost:6641
+export OVN_SB_DB=tcp:$neutronhost:6642
+
 
 echo 'Restarting openvswitch service'
 service openvswitch-switch restart
@@ -102,20 +109,20 @@ sleep 3
 
 ovs-vsctl --no-wait -- --may-exist add-br br-int
 ovs-vsctl --no-wait -- --may-exist add-br br-provider
-ovs-vsctl --no-wait -- --may-exist add-br br-vtep
+#ovs-vsctl --no-wait -- --may-exist add-br br-vtep
 
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote=tcp:$neutronhost:6642
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
+ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=geneve
 #ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=geneve,vxlan
-ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=vxlan
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip=$3
 
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge-mappings=internet:br-provider
 
 #echo 'OpenVSwitch configuration is done.'
 
-vtep-ctl add-ps br-vtep
-vtep-ctl set Physical_Switch br-vtep tunnel_ips=$3
+#vtep-ctl add-ps br-vtep
+#vtep-ctl set Physical_Switch br-vtep tunnel_ips=$3
 
 echo 'OVN controller is now installed'
 
@@ -198,7 +205,10 @@ echo "Adding public nic to ovs bridge..."
 br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
 ovs-vsctl add-port br-provider $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-provider $br_ex_ip
 
+sleep 5
+
 mkdir -p /var/log/neutron
+
 
 neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/dhcp_agent.ini \

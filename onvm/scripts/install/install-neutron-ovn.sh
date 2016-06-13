@@ -27,6 +27,16 @@ ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6641:$3
 # OVN Southbound database needs open to compute nodes
 ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6642:$3
 
+
+neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
+eval neutronhost=$neutronhost
+
+echo "export OVN_NB_DB=tcp:$neutronhost:6641" >> ~/.bash_profile
+echo "export OVN_SB_DB=tcp:$neutronhost:6642" >> ~/.bash_profile
+export OVN_NB_DB=tcp:$neutronhost:6641
+export OVN_SB_DB=tcp:$neutronhost:6642
+
+
 echo 'Start openvswitch services'
 service openvswitch-switch restart
 service ovn-central restart

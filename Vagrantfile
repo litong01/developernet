@@ -68,14 +68,15 @@ Vagrant.configure("2") do |config|
           managed.server = nodes[key]['eth0']
         end
 
-        node.vm.provision "#{key}-install", type: "shell" do |s|
-          s.path = "onvm/scripts/install/install-compute-" + n_type + ".sh"
+        # we will isntall cinder storage on each compute node first
+        node.vm.provision "#{key}-storage-install", type: "shell" do |s|
+          s.path = "onvm/scripts/install/install-cinder-storage.sh"
           s.args = ids['sys_password'] + " " + nodes[key]['eth0'] + " " + nodes[key]['eth1']
         end
 
-        # we will isntall cinder storage on each compute node as well
-        node.vm.provision "#{key}-storage-install", type: "shell" do |s|
-          s.path = "onvm/scripts/install/install-cinder-storage.sh"
+        # then we install neutron and nova stuff
+        node.vm.provision "#{key}-install", type: "shell" do |s|
+          s.path = "onvm/scripts/install/install-compute-" + n_type + ".sh"
           s.args = ids['sys_password'] + " " + nodes[key]['eth0'] + " " + nodes[key]['eth1']
         end
       end
