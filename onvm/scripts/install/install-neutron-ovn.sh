@@ -79,16 +79,22 @@ echo "Configure the server component"
 
 iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'neutron.plugins.ml2.plugin.Ml2Plugin'
-iniset /etc/neutron/neutron.conf DEFAULT service_plugins "networking_ovn.l3.l3_ovn.OVNL3RouterPlugin"
+iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'networking_ovn.l3.l3_ovn.OVNL3RouterPlugin'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT bind_host '0.0.0.0'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT network_scheduler_driver 'neutron.scheduler.dhcp_agent_scheduler.AZAwareWeightScheduler'
+iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+
+iniset /etc/neutron/neutron.conf DEFAULT dhcp_load_type 'networks'
+iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 
 iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
-iniset /etc/neutron/neutron.conf ovn ovsdb_connection tcp:$3:6641
+iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$3:6641
+iniset /etc/neutron/neutron.conf ovn ovn_sb_connection tcp:$3:6642
+
 
 iniset /etc/neutron/neutron.conf agent root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
 iniset /etc/neutron/neutron.conf agent root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
@@ -139,6 +145,10 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers 'ovn,logger'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_gre tunnel_id_ranges '1:1000'
 
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_l3_mode True
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_nb_connection tcp:$3:6641
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_sb_connection tcp:$3:6642
+
 
 echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
 confset /etc/sysctl.conf net.ipv4.ip_forward 1
@@ -155,6 +165,10 @@ iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 
 su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head"
+
+su -s /bin/sh -c "neutron-ovn-db-sync-util --ovn-neutron_sync_mode=repair \
+  --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini"
 
 mkdir -p /var/log/neutron
 

@@ -19,9 +19,9 @@ iniset /etc/nova/nova.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip $3
-#iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
+iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 
-#iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
+iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
 #iniset /etc/nova/nova.conf DEFAULT security_group_api 'neutron'
 #iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
@@ -30,7 +30,6 @@ metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/nova/nova.conf DEFAULT metadata_host $metahost
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
-
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '0.0.0.0'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
@@ -82,6 +81,12 @@ if [ $doqemu -eq 0 ]; then
   iniset /etc/nova/nova.conf libvirt virt_type 'qemu'
   iniset /etc/nova/nova-compute.conf libvirt virt_type 'qemu'
 fi
+
+# Remove some of the default settings
+inidelete /etc/nova/nova.conf DEFAULT libvirt_use_virtio_for_bridges
+inidelete /etc/nova/nova.conf DEFAULT dhcpbridge
+inidelete /etc/nova/nova.conf DEFAULT dhcpbridge_flagfile
+
 
 echo 'Install OVN from the local build'
 debloc='/leapbin'
@@ -142,16 +147,20 @@ python setup.py install
 ./tools/generate_config_file_samples.sh
 
 mkdir -p /etc/neutron/plugins/ml2
+mkdir -p /var/lib/neutron
 cp -r etc/neutron/* /etc/neutron
 cp etc/api-paste.ini /etc/neutron
 cp etc/policy.json /etc/neutron
 cp etc/rootwrap.conf /etc/neutron
 cp etc/neutron.conf.sample /etc/neutron/neutron.conf
 
+iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+iniset /etc/neutron/neutron.conf oslo_concurrency lock_path /var/lib/neutron
+
 
 
 # Configure /etc/neutron/dhcp_agent.ini
