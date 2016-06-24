@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-
+export LEAP=DEVELOPMENT
+export VAGRANT_VAGRANTFILE="Vagrantfile"
 rm -r -f .vagrant
 
 machines=('os-controller' 'os-neutron' 'os-compute01' 'os-compute02')

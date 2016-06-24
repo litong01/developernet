@@ -19,7 +19,7 @@ neutron net-create internet --shared --router:external True \
   --provider:network_type flat
 
 neutron subnet-create internet $2 --name internet-subnet --allocation-pool \
-  start=$3,end=$4 --dns-nameserver 8.8.4.4 --gateway $5 --disable-dhcp
+  start=$3,end=$4 --dns-nameserver 8.8.4.4 --gateway $5
 
 source ~/demo-openrc.sh
 neutron net-create demonet

@@ -22,6 +22,7 @@ iniset /etc/nova/nova.conf DEFAULT my_ip $3
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 
 iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
+iniset /etc/nova/nova.conf DEFAULT use_neutron 'True'
 #iniset /etc/nova/nova.conf DEFAULT security_group_api 'neutron'
 #iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
@@ -90,11 +91,12 @@ inidelete /etc/nova/nova.conf DEFAULT dhcpbridge_flagfile
 
 echo 'Install OVN from the local build'
 debloc='/leapbin'
+apt-get install -qqy build-essential dkms
+dpkg -i "$debloc"/openvswitch-datapath-dkms_2.5.90-1_all.deb
 dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/python-openvswitch_2.5.90-1_all.deb
-#dpkg -i "$debloc"/openvswitch-vtep_2.5.90-1_amd64.deb
 dpkg -i "$debloc"/ovn-host_2.5.90-1_amd64.deb
 
 neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
@@ -106,23 +108,17 @@ echo "export OVN_SB_DB=tcp:$neutronhost:6642" >> ~/.bash_profile
 export OVN_NB_DB=tcp:$neutronhost:6641
 export OVN_SB_DB=tcp:$neutronhost:6642
 
-
-echo 'Restarting openvswitch service'
-service openvswitch-switch restart
-echo 'Waiting for the services to start...'
-sleep 3
-
 ovs-vsctl --no-wait -- --may-exist add-br br-int
-ovs-vsctl --no-wait -- --may-exist add-br br-provider
-#ovs-vsctl --no-wait -- --may-exist add-br br-vtep
+ovs-vsctl --no-wait set bridge br-int fail-mode=secure other-config:disable-in-band=true
+
+ovs-vsctl --may-exist add-br br-provider -- set bridge br-provider protocols=OpenFlow13
+ovs-vsctl set open . external-ids:ovn-bridge-mappings=internet:br-provider
+
 
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-remote=tcp:$neutronhost:6642
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge="br-int"
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=geneve
-#ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-type=geneve,vxlan
 ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip=$3
-
-ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge-mappings=internet:br-provider
 
 #echo 'OpenVSwitch configuration is done.'
 
@@ -131,16 +127,14 @@ ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-bridge-mappings=internet
 
 echo 'OVN controller is now installed'
 
-service nova-compute restart
-service openvswitch-switch restart
-service ovn-host restart
-
-echo 'Services on compute node started!'
-
+echo 'Restarting openvswitch service'
+echo 'Waiting for the services to start...'
+sleep 3
 
 echo 'Install DHCP & Metadata Agents...'
 git clone https://github.com/openstack/neutron /opt/neutron
 cd /opt/neutron
+git reset --hard 928e16c21337e26b1e2eaa43044826419d4bace5
 pip install -r requirements.txt
 pip install pymysql
 python setup.py install
@@ -209,15 +203,12 @@ confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
 echo 'Load the new kernel configuration'
 sysctl -p
 
-
-echo "Adding public nic to ovs bridge..."
-br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
-ovs-vsctl add-port br-provider $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-provider $br_ex_ip
-
-sleep 5
-
 mkdir -p /var/log/neutron
 
+
+service nova-compute restart
+#service openvswitch-switch restart
+#service ovn-host restart
 
 neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/dhcp_agent.ini \
@@ -226,3 +217,12 @@ neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
 neutron-metadata-agent --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/metadata_agent.ini \
   --logfile /var/log/neutron/metadata.log > /dev/null 2>&1 &
+
+echo 'Services on compute node started!'
+
+echo "Adding public nic to ovs bridge..."
+br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
+ovs-vsctl add-port br-provider $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-provider $br_ex_ip
+
+# The following line will make the machine lose connectivity.
+#ip addr flush dev $leap_pubnic;ip addr add $br_ex_ip dev br-provider;ip link set br-provider up;ovs-vsctl add-port br-provider $leap_pubnic
