@@ -48,6 +48,7 @@ echo 'OVS OVN installation is now complete!'
 echo 'Install Neutron Server...'
 git clone https://github.com/openstack/neutron /opt/neutron
 cd /opt/neutron
+git reset --hard 928e16c21337e26b1e2eaa43044826419d4bace5
 pip install -r requirements.txt
 pip install pymysql
 python setup.py install
@@ -65,7 +66,6 @@ cp etc/neutron.conf.sample /etc/neutron/neutron.conf
 echo 'Install networking-ovn from source...'
 git clone https://github.com/openstack/networking-ovn /opt/networking-ovn
 cd /opt/networking-ovn
-git reset --hard 928e16c21337e26b1e2eaa43044826419d4bace5
 pip install -r requirements.txt
 
 #pip uninstall amqp
