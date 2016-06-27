@@ -67,7 +67,7 @@ iniset /etc/nova/nova.conf neutron project_name 'service'
 iniset /etc/nova/nova.conf neutron username 'neutron'
 iniset /etc/nova/nova.conf neutron password $1
 iniset /etc/nova/nova.conf neutron service_metadata_proxy 'True'
-iniset /etc/nova/nova.conf neutron metadata_proxy_shared_secret $1
+#iniset /etc/nova/nova.conf neutron metadata_proxy_shared_secret $1
 
 #Setup cadf
 #iniset /etc/nova/api-paste.ini 'filter:audit' 'paste.filter_factory' 'keystonemiddleware.audit:filter_factory'

@@ -164,7 +164,7 @@ iniset /etc/neutron/metadata_agent.ini DEFAULT password $1
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
+#iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
 iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
 
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
