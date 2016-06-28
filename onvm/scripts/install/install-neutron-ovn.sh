@@ -138,13 +138,13 @@ iniset /etc/neutron/neutron.conf nova password $1
 # Configure /etc/neutron/plugins/ml2/ml2_conf.ini
 echo "Configure OVN plugin"
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types vxlan
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types geneve
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers port_security
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'local,flat,vlan,gre,vxlan'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'local,flat,geneve'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers 'ovn,logger'
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1001:2000'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_gre tunnel_id_ranges '1:1000'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_geneve vni_ranges '1:65536'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_geneve max_header_size '58'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_l3_mode True
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_nb_connection tcp:$3:6641

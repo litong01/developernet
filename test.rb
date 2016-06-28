@@ -21,3 +21,16 @@ else
   puts bb, 'not'
 end
 puts syncednodes
+
+
+initfiles = Dir["onvm/scripts/install/init-node-[0-9][0-9].sh"]
+initfiles.each do | filepath |
+   puts filepath
+   pname = File.basename(filepath, ".*")
+   puts pname
+   netinitfiles = Dir["onvm/scripts/install/" + pname + "-ovn.sh"]
+   if netinitfiles.length > 0
+      filepath = netinitfiles[0]
+      puts "hahahaha " + filepath
+   end
+end

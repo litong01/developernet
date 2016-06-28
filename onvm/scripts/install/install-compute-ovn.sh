@@ -110,6 +110,7 @@ export OVN_SB_DB=tcp:$neutronhost:6642
 
 ovs-vsctl --no-wait -- --may-exist add-br br-int
 ovs-vsctl --no-wait set bridge br-int fail-mode=secure other-config:disable-in-band=true
+ovs-vsctl --no-wait set bridge br-int external-ids:bridge-id=br-int
 
 ovs-vsctl --may-exist add-br br-provider -- set bridge br-provider protocols=OpenFlow13
 ovs-vsctl set open . external-ids:ovn-bridge-mappings=internet:br-provider
@@ -207,8 +208,13 @@ mkdir -p /var/log/neutron
 
 
 service nova-compute restart
-#service openvswitch-switch restart
-#service ovn-host restart
+
+# Connect two bridges using a patch port
+
+ovs-vsctl add-port br-int patch-int-to-prov -- set interface patch-int-to-prov \
+  type=patch options:peer=patch-prov-to-int
+ovs-vsctl add-port br-provider patch-prov-to-int -- set interface patch-prov-to-int \
+  type=patch options:peer=patch-int-to-prov
 
 neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/dhcp_agent.ini \

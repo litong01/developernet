@@ -90,9 +90,13 @@ Vagrant.configure("2") do |config|
         managed.server = nodes[nodes['logical2physical']['keystone']]['eth0']
       end
 
-      initfiles = Dir["onvm/scripts/install/init-node-*.sh"]
+      initfiles = Dir["onvm/scripts/install/init-node-[0-9][0-9].sh"]
       initfiles.each do | filepath |
         pname = File.basename(filepath, ".*")
+        netinitfiles = Dir["onvm/scripts/install/" + pname + "-" + n_type + ".sh"]
+        if netinitfiles.length > 0
+          filepath = netinitfiles[0]
+        end
 
         node.vm.provision "#{pname}", type: "shell" do |s|
           s.path = filepath
