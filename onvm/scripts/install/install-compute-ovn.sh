@@ -117,9 +117,10 @@ ovs-vsctl --no-wait set open_vswitch . external-ids:ovn-encap-ip=$3
 
 ovs-vsctl --no-wait -- --may-exist add-br br-int
 ovs-vsctl --no-wait set bridge br-int fail-mode=secure other-config:disable-in-band=true
-ovs-vsctl --no-wait set bridge br-int external-ids:bridge-id=br-int
+ovs-vsctl --no-wait set bridge br-int external-ids:bridge-id="br-int"
 
-ovs-vsctl --may-exist add-br br-provider -- set bridge br-provider protocols=OpenFlow13
+ovs-vsctl --no-wait --may-exist add-br br-provider -- set bridge br-provider protocols=OpenFlow13
+ovs-vsctl --no-wait set bridge br-provider external-ids:bridge-id="br-provider"
 ovs-vsctl set open . external-ids:ovn-bridge-mappings=internet:br-provider
 
 #echo 'OpenVSwitch configuration is done.'

@@ -15,7 +15,7 @@ echo "Setting up public and private network..."
 source ~/admin-openrc.sh
 
 neutron net-create internet --shared --router:external True \
-  --provider:physical_network public \
+  --provider:physical_network internet \
   --provider:network_type flat
 
 neutron subnet-create internet $2 --name internet-subnet --allocation-pool \
