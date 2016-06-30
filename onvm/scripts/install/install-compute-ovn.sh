@@ -119,9 +119,9 @@ ovs-vsctl --no-wait -- --may-exist add-br br-int
 ovs-vsctl --no-wait set bridge br-int fail-mode=secure other-config:disable-in-band=true
 ovs-vsctl --no-wait set bridge br-int external-ids:bridge-id="br-int"
 
-ovs-vsctl --no-wait --may-exist add-br br-provider -- set bridge br-provider protocols=OpenFlow13
-ovs-vsctl --no-wait set bridge br-provider external-ids:bridge-id="br-provider"
-ovs-vsctl set open . external-ids:ovn-bridge-mappings=internet:br-provider
+ovs-vsctl --no-wait --may-exist add-br br-ex -- set bridge br-ex protocols=OpenFlow13
+ovs-vsctl --no-wait set bridge br-ex external-ids:bridge-id="br-ex"
+ovs-vsctl set open . external-ids:ovn-bridge-mappings=internet:br-ex
 
 #echo 'OpenVSwitch configuration is done.'
 
@@ -215,14 +215,6 @@ service nova-compute restart
 virsh net-destroy default
 virsh net-undefine default
 
-# Connect two bridges using a patch port
-#ovs-vsctl add-port br-int patch-int-to-prov -- set interface patch-int-to-prov \
-#  type=patch options:peer=patch-prov-to-int
-#ovs-vsctl add-port br-provider patch-prov-to-int -- set interface patch-prov-to-int \
-#  type=patch options:peer=patch-int-to-prov
-
-
-
 mkdir -p /var/log/neutron
 
 neutron-dhcp-agent --config-file /etc/neutron/neutron.conf \
@@ -237,7 +229,4 @@ echo 'Services on compute node started!'
 
 echo "Adding public nic to ovs bridge..."
 br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
-ovs-vsctl add-port br-provider $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-provider $br_ex_ip
-
-# The following line will make the machine lose connectivity.
-#ip addr flush dev $leap_pubnic;ip addr add $br_ex_ip dev br-provider;ip link set br-provider up;ovs-vsctl add-port br-provider $leap_pubnic
+ovs-vsctl add-port br-ex $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-ex $br_ex_ip
