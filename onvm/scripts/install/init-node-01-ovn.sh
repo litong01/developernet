@@ -25,6 +25,6 @@ source ~/demo-openrc.sh
 neutron net-create demonet
 
 neutron subnet-create demonet 10.0.10.0/24 --name demonet-subnet \
-  --dns-nameserver 8.8.4.4 --gateway 10.0.10.0/24
+  --dns-nameserver 8.8.4.4 --gateway 10.0.10.1
 
 echo "Init-node-01-ovn is now complete!"
