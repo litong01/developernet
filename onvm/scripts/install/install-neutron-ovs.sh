@@ -209,6 +209,14 @@ ovs-vsctl add-port br-ex $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-
 echo "Adding default route..."
 route add -net 0.0.0.0 gw $leap_public_net_gateway br-ex
 
+
+# Connect bridge br-ex and br-int using a patch port
+ovs-vsctl add-port br-int patch-int-to-ex -- set interface patch-int-to-ex \
+  type=patch options:peer=patch-ex-to-int
+ovs-vsctl add-port br-ex patch-ex-to-int -- set interface patch-ex-to-int \
+  type=patch options:peer=patch-int-to-ex
+
+
 rm -f /var/lib/neutron/neutron.sqlite
 
 echo "Neutron setup is now complete!"
