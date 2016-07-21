@@ -1,34 +1,34 @@
 ---
 repo:
   host_name: repo.leap.dev
-  eth0: 192.168.1.40
-  eth1: 10.0.2.40
+  eth0: 192.168.56.179
+  eth1: 10.0.2.179
 
 controller:
   host_name: controller.leap.dev
-  eth0: 192.168.1.37
-  eth1: 10.0.2.37
+  eth0: 192.168.56.180
+  eth1: 10.0.2.180
 
 neutron:
   host_name: neutron.leap.dev
-  eth0: 192.168.1.38
-  eth1: 10.0.2.38
+  eth0: 192.168.56.181
+  eth1: 10.0.2.181
 
 compute01:
   host_name: compute01.leap.dev
-  eth0: 192.168.1.31
-  eth1: 10.0.2.31
+  eth0: 192.168.56.182
+  eth1: 10.0.2.182
 
 compute02:
   host_name: compute02.leap.dev
-  eth0: 192.168.1.39
-  eth1: 10.0.2.39
+  eth0: 192.168.56.183
+  eth1: 10.0.2.183
 
 public_net:
-  cidr: 192.168.1.1/24
-  start_ip: 192.168.1.190
-  end_ip: 192.168.1.200
-  gateway: 192.168.1.1
+  cidr: 192.168.56.0/24
+  start_ip: 192.168.56.10
+  end_ip: 192.168.56.150
+  gateway: 192.168.56.1
 
 # Logical node to physical node mapping, if you like to use one physical
 # server to run multiple services, simply map multiple services into one

@@ -48,7 +48,7 @@ echo 'OVS OVN installation is now complete!'
 echo 'Install Neutron Server...'
 git clone https://github.com/openstack/neutron /opt/neutron
 cd /opt/neutron
-git reset --hard 928e16c21337e26b1e2eaa43044826419d4bace5
+#git reset --hard 928e16c21337e26b1e2eaa43044826419d4bace5
 pip install -r requirements.txt
 pip install pymysql
 python setup.py install
