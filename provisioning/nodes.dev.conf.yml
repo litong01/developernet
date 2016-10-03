@@ -26,8 +26,8 @@ compute02:
 
 public_net:
   cidr: 192.168.56.0/24
-  start_ip: 192.168.56.10
-  end_ip: 192.168.56.150
+  start_ip: 192.168.56.20
+  end_ip: 192.168.56.50
   gateway: 192.168.56.1
 
 # Logical node to physical node mapping, if you like to use one physical
@@ -86,7 +86,7 @@ instances_path: /var/lib/nova/instances
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: ovn
+network: linuxbridge
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root

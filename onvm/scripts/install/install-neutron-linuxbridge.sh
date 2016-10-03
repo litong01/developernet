@@ -10,7 +10,7 @@ apt-get update
 # Make sure that the configuration in conf.yml file is correct in terms of
 # what network to use
 apt-get install -qqy "$leap_aptopt" neutron-server neutron-plugin-ml2 \
-  neutron-linuxbridge-agent neutron-l3-agent neutron-dhcp-agent \
+  neutron-linuxbridge-agent neutron-dhcp-agent \
   neutron-metadata-agent haproxy neutron-lbaas-agent \
   python-neutronclient
 
@@ -20,7 +20,6 @@ service neutron-server stop
 service neutron-linuxbridge-agent stop
 service neutron-dhcp-agent stop
 service neutron-metadata-agent stop
-service neutron-l3-agent stop
 service neutron-lbaas-agent stop
 
 
@@ -34,6 +33,8 @@ iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
+iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
+iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 1
 
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
@@ -81,7 +82,7 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings "public:${leap_pubnic}"
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings "vxlan:eth1"
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan l2_population 'False'
@@ -104,33 +105,12 @@ iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_ipset
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "public:${leap_pubnic}"
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "vxlan:eth1"
 
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population 'False'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $3
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan vxlan_group '239.1.1.1'
-
-
-# Configure the kernel to enable packet forwarding and disable reverse path filting
-echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
-confset /etc/sysctl.conf net.ipv4.ip_forward 1
-confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
-confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
-
-echo 'Load the new kernel configuration'
-sysctl -p
-
-
-# Configure /etc/neutron/l3_agent.ini 
-echo "Configure the layer-3 agent"
-
-iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
-iniset /etc/neutron/l3_agent.ini DEFAULT external_network_bridge ''
-iniset /etc/neutron/l3_agent.ini DEFAULT debug 'True'
-iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
-iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
-iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 
 
 # Configure /etc/neutron/dhcp_agent.ini 
@@ -180,7 +160,6 @@ iniset /etc/neutron/lbaas_agent.ini DEFAULT interface_driver 'neutron.agent.linu
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
-iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/dhcp_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
 iniremcomment /etc/neutron/neutron_lbaas.conf
@@ -196,7 +175,6 @@ service neutron-server start
 service neutron-linuxbridge-agent start
 service neutron-dhcp-agent start
 service neutron-metadata-agent start
-service neutron-l3-agent start
 service neutron-lbaas-agent start
 
 rm -f /var/lib/neutron/neutron.sqlite

@@ -8,7 +8,8 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
-apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent
+apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent \
+  neutron-l3-agent
 
 echo "Compute packages are installed!"
 
@@ -87,7 +88,6 @@ confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
 confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
 confset /etc/sysctl.conf net.bridge.bridge-nf-call-iptables 1
 confset /etc/sysctl.conf net.bridge.bridge-nf-call-ip6tables 1
-#confset /etc/sysctl.conf net.ipv4.ip_forward 1
 
 sysctl -p
 
@@ -131,7 +131,7 @@ iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_ipset
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "vxlan:eth1"
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "public:${leap_pubnic},vxlan:eth1"
 
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population 'False'
@@ -148,8 +148,30 @@ echo 'Load the new kernel configuration'
 sysctl -p
 
 
+# Configure the kernel to enable packet forwarding and disable reverse path filting
+echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
+confset /etc/sysctl.conf net.ipv4.ip_forward 1
+confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
+confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
+
+echo 'Load the new kernel configuration'
+sysctl -p
+
+
+# Configure /etc/neutron/l3_agent.ini 
+echo "Configure the layer-3 agent"
+
+iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
+iniset /etc/neutron/l3_agent.ini DEFAULT external_network_bridge ''
+iniset /etc/neutron/l3_agent.ini DEFAULT debug 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
+
+
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
+iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
@@ -157,5 +179,6 @@ rm -f /var/lib/nova/nova.sqlite
 
 service nova-compute restart
 service neutron-linuxbridge-agent restart
+service neutron-l3-agent start
 
 echo "Compute setup is now complete!"
