@@ -11,6 +11,10 @@ apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent \
   neutron-l3-agent
 
+service neutron-linuxbridge-agent stop
+service neutron-l3-agent stop
+service neutron-metadata-agent stop
+
 echo "Compute packages are installed!"
 
 iniset /etc/nova/nova.conf DEFAULT rpc_backend 'rabbit'
@@ -94,6 +98,7 @@ sysctl -p
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
+iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
@@ -168,10 +173,33 @@ iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
 iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
 iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 
+#Configure /etc/neutron/metadata_agent.ini
+echo "Configure the metadata agent"
+
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_uri "http://${leap_logical2physical_keystone}:5000"
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_url "http://${leap_logical2physical_keystone}:35357"
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_region 'RegionOne'
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_type 'password'
+iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_name 'default'
+iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_name 'default'
+iniset /etc/neutron/metadata_agent.ini DEFAULT project_name 'service'
+iniset /etc/neutron/metadata_agent.ini DEFAULT username 'neutron'
+iniset /etc/neutron/metadata_agent.ini DEFAULT password $1
+
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+eval metahost=$metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
+
+inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
+inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
+inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
+
 
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/l3_agent.ini
+iniremcomment /etc/neutron/metadata_agent.ini
 iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
@@ -179,6 +207,7 @@ rm -f /var/lib/nova/nova.sqlite
 
 service nova-compute restart
 service neutron-linuxbridge-agent restart
+service neutron-metadata-agent start
 service neutron-l3-agent start
 
 echo "Compute setup is now complete!"

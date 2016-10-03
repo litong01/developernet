@@ -10,8 +10,7 @@ apt-get update
 # Make sure that the configuration in conf.yml file is correct in terms of
 # what network to use
 apt-get install -qqy "$leap_aptopt" neutron-server neutron-plugin-ml2 \
-  neutron-linuxbridge-agent neutron-dhcp-agent \
-  neutron-metadata-agent haproxy neutron-lbaas-agent \
+  neutron-linuxbridge-agent neutron-dhcp-agent haproxy neutron-lbaas-agent \
   python-neutronclient
 
 echo "Neutron packages are installed!"
@@ -125,29 +124,6 @@ iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
 
 #echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
 
-#Configure /etc/neutron/metadata_agent.ini
-echo "Configure the metadata agent"
-
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_uri "http://${leap_logical2physical_keystone}:5000"
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_url "http://${leap_logical2physical_keystone}:35357"
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_region 'RegionOne'
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_type 'password'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_name 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_name 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_name 'service'
-iniset /etc/neutron/metadata_agent.ini DEFAULT username 'neutron'
-iniset /etc/neutron/metadata_agent.ini DEFAULT password $1
-
-metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
-eval metahost=$metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
-#iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
-iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
-
-inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
-inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
-inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
-
 # Configuring load balancer
 iniset /etc/neutron/neutron.conf service_providers service_provider 'LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default'
 iniset /etc/neutron/neutron_lbaas.conf service_providers service_provider 'LOADBALANCER:Haproxy:neutron_lbaas.services.loadbalancer.drivers.haproxy.plugin_driver.HaproxyOnHostPluginDriver:default'
@@ -161,7 +137,6 @@ iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 iniremcomment /etc/neutron/dhcp_agent.ini
-iniremcomment /etc/neutron/metadata_agent.ini
 iniremcomment /etc/neutron/neutron_lbaas.conf
 iniremcomment /etc/neutron/lbaas_agent.ini
 
@@ -174,7 +149,6 @@ neutron-db-manage --service lbaas upgrade head
 service neutron-server start
 service neutron-linuxbridge-agent start
 service neutron-dhcp-agent start
-service neutron-metadata-agent start
 service neutron-lbaas-agent start
 
 rm -f /var/lib/neutron/neutron.sqlite
