@@ -118,7 +118,7 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
 
-# Configure the OVS agent /etc/neutron/plugins/ml2/ml2_conf.ini
+# Configure the OVS agent /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 echo "Configure Modular Layer 2 (ML2) plug-in"
 
@@ -200,7 +200,6 @@ iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
-iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 rm -f /var/lib/nova/nova.sqlite

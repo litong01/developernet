@@ -43,8 +43,8 @@ logical2physical:
   cinder: controller
   heat: controller
   nova: controller
-  neutron: neutron
-
+  #neutron: neutron
+  neutron: controller
 
 # Define how many logical nodes and the sequence of the installation
 ctlnodes:
