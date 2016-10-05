@@ -15,4 +15,6 @@ rabbitmqctl set_permissions openstack ".*" ".*" ".*"
 rabbitmqctl set_user_tags openstack administrator
 rabbitmq-plugins enable rabbitmq_management
 
+echo -e "NODE_IP_ADDRESS=$3" >> /etc/rabbitmq/rabbitmq-env.conf
 
+service rabbitmq-server restart

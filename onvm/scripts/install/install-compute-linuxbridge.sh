@@ -204,8 +204,8 @@ iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 rm -f /var/lib/nova/nova.sqlite
 
-service nova-compute restart
-service neutron-linuxbridge-agent restart
+service nova-compute start
+service neutron-linuxbridge-agent start
 service neutron-metadata-agent start
 service neutron-l3-agent start
 

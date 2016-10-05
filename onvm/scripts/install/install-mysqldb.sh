@@ -20,7 +20,7 @@ iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld default-storage-engine inno
 iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld innodb_file_per_table on
 iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld collation-server utf8_general_ci
 iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld init-connect 'SET NAMES utf8'
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld max_connections 300
+iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld max_connections 500
 iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld character-set-server utf8
 
 service mysql restart

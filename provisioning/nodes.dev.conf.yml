@@ -7,22 +7,17 @@ repo:
 controller:
   host_name: controller.leap.dev
   eth0: 192.168.56.180
-  eth1: 10.0.2.180
-
-neutron:
-  host_name: neutron.leap.dev
-  eth0: 192.168.56.181
-  eth1: 10.0.2.181
+  eth1: 10.10.2.180
 
 compute01:
   host_name: compute01.leap.dev
   eth0: 192.168.56.182
-  eth1: 10.0.2.182
+  eth1: 10.10.2.182
 
 compute02:
   host_name: compute02.leap.dev
   eth0: 192.168.56.183
-  eth1: 10.0.2.183
+  eth1: 10.10.2.183
 
 public_net:
   cidr: 192.168.56.0/24
@@ -43,7 +38,6 @@ logical2physical:
   cinder: controller
   heat: controller
   nova: controller
-  #neutron: neutron
   neutron: controller
 
 # Define how many logical nodes and the sequence of the installation
@@ -86,7 +80,7 @@ instances_path: /var/lib/nova/instances
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: linuxbridge
+network: ovs
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root

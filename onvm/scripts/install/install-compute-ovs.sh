@@ -8,7 +8,14 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
-apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent
+apt-get install -qqy "$leap_aptopt" neutron-plugin-ml2 \
+  neutron-openvswitch-agent neutron-l3-agent neutron-dhcp-agent haproxy
+
+service nova-compute stop
+service neutron-openvswitch-agent stop
+service neutron-metadata-agent stop
+service neutron-l3-agent stop
+service neutron-dhcp-agent stop
 
 echo "Compute packages are installed!"
 
@@ -84,13 +91,16 @@ fi
 echo 'Configure neutron on compute node'
 
 
+# Configure the kernel to enable packet forwarding and disable reverse path filting
+echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
+confset /etc/sysctl.conf net.ipv4.ip_forward 1
 confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
 confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
 confset /etc/sysctl.conf net.bridge.bridge-nf-call-iptables 1
 confset /etc/sysctl.conf net.bridge.bridge-nf-call-ip6tables 1
-#confset /etc/sysctl.conf net.ipv4.ip_forward 1
 
-sysctl -p
+echo 'Load the new kernel configuration'
+sysctl -p /etc/sysctl.conf
 
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
@@ -119,7 +129,7 @@ echo "Configure openvswitch agent"
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 type_drivers 'flat,vxlan'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 tenant_network_types 'vxlan'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 mechanism_drivers "openvswitch"
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 mechanism_drivers "openvswitch,l2population"
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 extension_drivers 'port_security'
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_flat flat_networks 'public'
@@ -140,30 +150,82 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings 'public:br-ex'
 
-#iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_types vxlan
 
+# Configure /etc/neutron/l3_agent.ini 
+echo "Configure the layer-3 agent"
 
-# Configure the kernel to enable packet forwarding and disable reverse path filting
-echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
-confset /etc/sysctl.conf net.ipv4.ip_forward 1
-confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
-confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
+iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
+iniset /etc/neutron/l3_agent.ini DEFAULT external_network_bridge 'br-ex'
+iniset /etc/neutron/l3_agent.ini DEFAULT debug 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
+iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 
-echo 'Load the new kernel configuration'
-sysctl -p
+#Configure /etc/neutron/metadata_agent.ini
+echo "Configure the metadata agent"
+
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_uri "http://${leap_logical2physical_keystone}:5000"
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_url "http://${leap_logical2physical_keystone}:35357"
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_region 'RegionOne'
+iniset /etc/neutron/metadata_agent.ini DEFAULT auth_type 'password'
+iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_name 'default'
+iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_name 'default'
+iniset /etc/neutron/metadata_agent.ini DEFAULT project_name 'service'
+iniset /etc/neutron/metadata_agent.ini DEFAULT username 'neutron'
+iniset /etc/neutron/metadata_agent.ini DEFAULT password $1
+
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+eval metahost=$metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
+iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
+iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
+
+inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
+inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
+inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
+
+
+# Configure /etc/neutron/dhcp_agent.ini
+echo "Configure the DHCP agent"
+
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
+
+echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
 
 
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
+iniremcomment /etc/neutron/dhcp_agent.ini
+iniremcomment /etc/neutron/l3_agent.ini
+iniremcomment /etc/neutron/metadata_agent.ini
 
 
 rm -f /var/lib/nova/nova.sqlite
 
-service nova-compute restart
-service openvswitch-switch restart
-service neutron-openvswitch-agent restart
+echo 'Adding br-ex bridge...'
+ovs-vsctl add-br br-ex
+
+echo "Start services..."
+service nova-compute start
+service neutron-openvswitch-agent start
+service neutron-l3-agent start
+service neutron-dhcp-agent start
+service neutron-metadata-agent start
+
+#echo "Configuring bridges"
+
+#echo "Adding public nic to ovs bridge..."
+br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
+ifconfig $leap_pubnic 0.0.0.0; ifconfig br-ex $br_ex_ip; ovs-vsctl add-port br-ex $leap_pubnic
 
 echo "Compute setup is now complete!"
