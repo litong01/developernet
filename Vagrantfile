@@ -37,6 +37,7 @@ Vagrant.configure("2") do |config|
       suffix = suffixes.index(key)? ('-' + n_type):''
       config.vm.define "#{key}" do |node|
         nodekey = nodes['logical2physical'][key]
+        node.vm.hostname = nodekey
 
         if sync_cfg['nodes'].index(key)
           node.vm.synced_folder sync_cfg['folder'], "/leapbin", disabled: false, create: true
@@ -59,6 +60,7 @@ Vagrant.configure("2") do |config|
   if lnodes
     lnodes.each do |key|
       config.vm.define "#{key}" do |node|
+        node.vm.hostname = key
 
         if sync_cfg['nodes'].index(key)
           node.vm.synced_folder sync_cfg['folder'], "/leapbin", disabled: false, create: true

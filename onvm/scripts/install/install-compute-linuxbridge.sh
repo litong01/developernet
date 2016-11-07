@@ -9,11 +9,13 @@ apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent \
-  neutron-l3-agent
+  neutron-l3-agent neutron-dhcp-agent
 
 service neutron-linuxbridge-agent stop
 service neutron-l3-agent stop
 service neutron-metadata-agent stop
+service neutron-dhcp-agent stop
+service nova-compute stop
 
 echo "Compute packages are installed!"
 
@@ -31,7 +33,7 @@ metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/nova/nova.conf DEFAULT metadata_host $metahost
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
-
+iniset /etc/nova/nova.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '0.0.0.0'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
@@ -41,7 +43,7 @@ vnchost=$(echo '$leap_'$leap_logical2physical_nova'_eth0')
 eval vnchost=$vnchost
 iniset /etc/nova/nova.conf vnc novncproxy_base_url http://$vnchost:6080/vnc_auto.html
 
-iniset /etc/nova/nova.conf glance host $leap_logical2physical_glance
+iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glance:9292
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
 
@@ -99,6 +101,8 @@ iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
+iniset /etc/neutron/neutron.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
+
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
@@ -196,10 +200,23 @@ inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
 
 
+# Configure /etc/neutron/dhcp_agent.ini 
+echo "Configure the dhcp agent"
+
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.BridgeInterfaceDriver'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata True
+iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
+
+echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
+
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
+iniremcomment /etc/neutron/dhcp_agent.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 rm -f /var/lib/nova/nova.sqlite
@@ -208,5 +225,6 @@ service nova-compute start
 service neutron-linuxbridge-agent start
 service neutron-metadata-agent start
 service neutron-l3-agent start
+service neutron-dhcp-agent start
 
 echo "Compute setup is now complete!"

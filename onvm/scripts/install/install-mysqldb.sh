@@ -14,14 +14,12 @@ apt-get -qqy "$leap_aptopt" install mariadb-server python-pymysql
 
 echo "Installed MariaDB!"
 
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld bind-address $3
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld performance_schema off
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld default-storage-engine innodb
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld innodb_file_per_table on
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld collation-server utf8_general_ci
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld init-connect 'SET NAMES utf8'
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld max_connections 500
-iniset /etc/mysql/conf.d/mysqld_openstack.cnf mysqld character-set-server utf8
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld bind-address $3
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld default-storage-engine innodb
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld innodb_file_per_table on
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld collation-server utf8_general_ci
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld max_connections 1024
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld character-set-server utf8
 
 service mysql restart
 

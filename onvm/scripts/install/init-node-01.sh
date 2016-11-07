@@ -10,9 +10,9 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 
 service apache2 restart
 
-echo "Setting up public and private network..."
-
 source ~/admin-openrc.sh
+
+echo "Setting up public and private network..."
 
 neutron net-create internet --shared --router:external True \
   --provider:physical_network public \

@@ -13,6 +13,9 @@ apt-get install -qqy "$leap_aptopt" keystone apache2 libapache2-mod-wsgi memcach
 
 echo "Keystone packages are installed!"
 
+sed -i -e "s/127.0.0.1/$3/1" /etc/memcached.conf
+service memcache restart
+
 iniset /etc/keystone/keystone.conf DEFAULT admin_token $1
 iniset /etc/keystone/keystone.conf DEFAULT rpc_backend rabbit
 iniset /etc/keystone/keystone.conf DEFAULT debug "True"
@@ -23,7 +26,10 @@ iniset /etc/keystone/keystone.conf token provider fernet
 iniset /etc/keystone/keystone.conf token driver memcache
 iniset /etc/keystone/keystone.conf revoke driver sql
 
+su -s /bin/sh -c "keystone-manage db_sync" keystone
+
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
+keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
 iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_userid openstack
@@ -31,12 +37,12 @@ iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_password $1
 
 echo "ServerName ${leap_logical2physical_keystone}" >> /etc/apache2/apache2.conf
 
-su -s /bin/sh -c "keystone-manage db_sync" keystone
+
 
 echo "Keystone configuration is done!"
 
-cp /onvm/conf/wsgi-keystone.conf /etc/apache2/sites-available/
-ln -s /etc/apache2/sites-available/wsgi-keystone.conf /etc/apache2/sites-enabled
+#cp /onvm/conf/wsgi-keystone.conf /etc/apache2/sites-available/
+#ln -s /etc/apache2/sites-available/wsgi-keystone.conf /etc/apache2/sites-enabled
 
 iniremcomment /etc/keystone/keystone.conf
 

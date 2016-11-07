@@ -34,7 +34,8 @@ metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/nova/nova.conf DEFAULT metadata_host $metahost
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
-
+iniset /etc/nova/nova.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
+iniset /etc/nova/nova.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '0.0.0.0'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
@@ -44,7 +45,7 @@ vnchost=$(echo '$leap_'$leap_logical2physical_nova'_eth0')
 eval vnchost=$vnchost
 iniset /etc/nova/nova.conf vnc novncproxy_base_url http://$vnchost:6080/vnc_auto.html
 
-iniset /etc/nova/nova.conf glance host $leap_logical2physical_glance
+iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glance:9292
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
 
@@ -105,6 +106,8 @@ sysctl -p /etc/sysctl.conf
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
+iniset /etc/neutron/neutron.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
+iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1

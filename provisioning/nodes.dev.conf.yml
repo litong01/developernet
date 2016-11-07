@@ -1,28 +1,23 @@
 ---
-repo:
-  host_name: repo.leap.dev
-  eth0: 192.168.56.179
-  eth1: 10.0.2.179
-
 controller:
   host_name: controller.leap.dev
-  eth0: 192.168.56.180
-  eth1: 10.10.2.180
+  eth0: 192.168.56.31
+  eth1: 10.0.2.25
 
 compute01:
   host_name: compute01.leap.dev
-  eth0: 192.168.56.182
-  eth1: 10.10.2.182
+  eth0: 192.168.56.32
+  eth1: 10.0.2.26
 
 compute02:
   host_name: compute02.leap.dev
-  eth0: 192.168.56.183
-  eth1: 10.10.2.183
+  eth0: 192.168.56.33
+  eth1: 10.0.2.27
 
 public_net:
   cidr: 192.168.56.0/24
-  start_ip: 192.168.56.20
-  end_ip: 192.168.56.50
+  start_ip: 192.168.56.50
+  end_ip: 192.168.56.90
   gateway: 192.168.56.1
 
 # Logical node to physical node mapping, if you like to use one physical
@@ -62,7 +57,7 @@ suffixes:
 
 timezone: America\/New_York
 
-cindervg: vg02
+cindervg: vg00
 
 glance_image_location: /storage/images
 
@@ -74,7 +69,7 @@ pubnic: eth0
 
 uselocalrepo: no
 
-aptopt: --force-yes
+aptopt:
 
 instances_path: /var/lib/nova/instances
 

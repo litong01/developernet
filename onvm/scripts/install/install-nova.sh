@@ -22,6 +22,7 @@ service nova-novncproxy stop
 iniset /etc/nova/nova.conf api_database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova_api
 iniset /etc/nova/nova.conf database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova
 iniset /etc/nova/nova.conf DEFAULT rpc_backend 'rabbit'
+iniset /etc/nova/nova.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip "$2"
