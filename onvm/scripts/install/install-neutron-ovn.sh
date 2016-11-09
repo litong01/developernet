@@ -12,11 +12,8 @@ easy_install -U pip
 
 echo 'All dependencies are now installed!'
 
-debloc='/leapbin'
-dpkg -i "$debloc"/openvswitch-common_2.5.90-1_amd64.deb
-dpkg -i "$debloc"/openvswitch-switch_2.5.90-1_amd64.deb
-dpkg -i "$debloc"/ovn-common_2.5.90-1_amd64.deb
-dpkg -i "$debloc"/ovn-central_2.5.90-1_amd64.deb
+apt-get install -qqy dkms openvswitch-common openvswitch-switch ovn-common \
+  ovn-central
 
 echo 'All OVN packages are installed!'
 echo 'Grant permission to the ovsdb so others can access via eth1 interface'
@@ -46,31 +43,14 @@ echo 'OVS OVN installation is now complete!'
 
 #============================================================
 echo 'Install Neutron Server...'
-git clone https://github.com/openstack/neutron /opt/neutron
-cd /opt/neutron
-#git reset --hard 928e16c21337e26b1e2eaa43044826419d4bace5
-pip install -r requirements.txt
-pip install pymysql
-python setup.py install
-./tools/generate_config_file_samples.sh
+apt-get install -qqy "$leap_aptopt" neutron-server
 
-mkdir -p /etc/neutron/plugins/ml2
-cp -r etc/neutron/* /etc/neutron
-cp etc/api-paste.ini /etc/neutron
-cp etc/policy.json /etc/neutron
-cp etc/rootwrap.conf /etc/neutron
-cp etc/neutron.conf.sample /etc/neutron/neutron.conf
-
-
+rm -r -f /var/log/neutron/*
 #========================================================================
 echo 'Install networking-ovn from source...'
-git clone https://github.com/openstack/networking-ovn /opt/networking-ovn
+git clone -b stable/newton https://github.com/openstack/networking-ovn /opt/networking-ovn
 cd /opt/networking-ovn
 pip install -r requirements.txt
-
-#pip uninstall amqp
-#pip install amqp==1.4.9
-
 python setup.py install
 
 echo "Neutron and ovn packages are installed!"
@@ -96,10 +76,8 @@ iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
 iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$3:6641
 iniset /etc/neutron/neutron.conf ovn ovn_sb_connection tcp:$3:6642
 
-
-iniset /etc/neutron/neutron.conf agent root_helper_daemon 'sudo /usr/local/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
-iniset /etc/neutron/neutron.conf agent root_helper 'sudo /usr/local/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
-
+iniset /etc/neutron/neutron.conf AGENT root_helper 'sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
+iniset /etc/neutron/neutron.conf AGENT root_helper_daemon 'sudo /usr/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
 
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
@@ -149,7 +127,8 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_geneve max_header_size '58
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_l3_mode True
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_nb_connection tcp:$3:6641
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_sb_connection tcp:$3:6642
-
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_native_dhcp True
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_l3_scheduler leastloaded
 
 echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
 confset /etc/sysctl.conf net.ipv4.ip_forward 1
@@ -164,18 +143,14 @@ sysctl -p
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/plugins/ml2/ml2_conf.ini
 
-su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head"
+neutron-db-manage --config-file /etc/neutron/neutron.conf \
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head
 
-su -s /bin/sh -c "neutron-ovn-db-sync-util --ovn-neutron_sync_mode=repair \
+neutron-ovn-db-sync-util --ovn-neutron_sync_mode=repair \
   --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini"
+  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
 
-mkdir -p /var/log/neutron
-
-neutron-server --config-file /etc/neutron/neutron.conf \
-  --config-file /etc/neutron/plugins/ml2/ml2_conf.ini \
-  --logfile /var/log/neutron/server.log > /dev/null 2>&1 &
+service neutron-server restart
 
 rm -f /var/lib/neutron/neutron.sqlite
 

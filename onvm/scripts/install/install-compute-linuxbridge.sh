@@ -220,6 +220,7 @@ iniremcomment /etc/neutron/dhcp_agent.ini
 iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 rm -f /var/lib/nova/nova.sqlite
+rm -r -f /var/log/nova/* /var/log/neutron/*
 
 service nova-compute start
 service neutron-linuxbridge-agent start

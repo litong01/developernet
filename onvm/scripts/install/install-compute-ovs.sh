@@ -27,7 +27,7 @@ iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 
 iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
 iniset /etc/nova/nova.conf DEFAULT security_group_api 'neutron'
-iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
+iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.LinuxOVSInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
 
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
@@ -49,10 +49,11 @@ iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glan
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
 
-iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
-iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
-iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
+#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
+#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
+#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
 
+iniset /etc/nova/nova.conf oslo_messaging_notifications driver messaging
 
 iniset /etc/nova/nova.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/nova/nova.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
@@ -66,7 +67,8 @@ iniset /etc/nova/nova.conf keystone_authtoken password $1
 
 # Configure compute to use Networking
 iniset /etc/nova/nova.conf neutron url http://$leap_logical2physical_neutron:9696
-iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone:35357
+#iniset /etc/nova/nova.conf neutron auth_uri http://$leap_logical2physical_keystone:5000
+#iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone/identity_v2_admin/v3
 iniset /etc/nova/nova.conf neutron auth_type 'password'
 iniset /etc/nova/nova.conf neutron project_domain_name 'default'
 iniset /etc/nova/nova.conf neutron user_domain_name 'default'
@@ -75,7 +77,7 @@ iniset /etc/nova/nova.conf neutron project_name 'service'
 iniset /etc/nova/nova.conf neutron username 'neutron'
 iniset /etc/nova/nova.conf neutron password $1
 iniset /etc/nova/nova.conf neutron service_metadata_proxy 'True'
-#iniset /etc/nova/nova.conf neutron metadata_proxy_shared_secret $1
+iniset /etc/nova/nova.conf neutron auth_strategy keystone
 
 
 # Configure nova to use cinder
@@ -108,9 +110,9 @@ iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
+#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
+#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
 
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
@@ -147,7 +149,7 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan vxlan_group '239.1.1
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_security_group 'True'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_ipset 'True'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_driver iptables_hybrid
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
@@ -195,7 +197,7 @@ inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
 # Configure /etc/neutron/dhcp_agent.ini
 echo "Configure the DHCP agent"
 
-iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'openvswitch'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
@@ -214,6 +216,8 @@ iniremcomment /etc/neutron/metadata_agent.ini
 
 
 rm -f /var/lib/nova/nova.sqlite
+rm -r -f /var/log/nova/* /var/log/neutron/*
+
 
 echo 'Adding br-ex bridge...'
 ovs-vsctl add-br br-ex
@@ -227,7 +231,7 @@ service neutron-metadata-agent start
 
 #echo "Configuring bridges"
 
-#echo "Adding public nic to ovs bridge..."
+echo "Adding public nic to ovs bridge..."
 br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
 ifconfig $leap_pubnic 0.0.0.0; ifconfig br-ex $br_ex_ip; ovs-vsctl add-port br-ex $leap_pubnic
 

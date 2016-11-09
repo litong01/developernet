@@ -75,14 +75,14 @@ instances_path: /var/lib/nova/instances
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: ovs
+network: ovn
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
 synchfolders:
   ovn: 
-    folder: ovnbin/debian1404.ovs2.5.90
-    nodes: [neutron, compute01, compute02]
+    folder: ../cloudimages
+    nodes: [keystone]
   ovs: 
     folder: ../cloudimages
     nodes: [keystone]
