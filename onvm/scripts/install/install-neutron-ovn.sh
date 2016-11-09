@@ -44,6 +44,7 @@ echo 'OVS OVN installation is now complete!'
 #============================================================
 echo 'Install Neutron Server...'
 apt-get install -qqy "$leap_aptopt" neutron-server
+service neutron-server stop
 
 rm -r -f /var/log/neutron/*
 #========================================================================
@@ -75,9 +76,6 @@ iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
 iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$3:6641
 iniset /etc/neutron/neutron.conf ovn ovn_sb_connection tcp:$3:6642
-
-iniset /etc/neutron/neutron.conf AGENT root_helper 'sudo /usr/bin/neutron-rootwrap /etc/neutron/rootwrap.conf'
-iniset /etc/neutron/neutron.conf AGENT root_helper_daemon 'sudo /usr/bin/neutron-rootwrap-daemon /etc/neutron/rootwrap.conf'
 
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
@@ -150,7 +148,9 @@ neutron-ovn-db-sync-util --ovn-neutron_sync_mode=repair \
   --config-file /etc/neutron/neutron.conf \
   --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
 
-service neutron-server restart
+sleep 10
+
+service neutron-server start
 
 rm -f /var/lib/neutron/neutron.sqlite
 
