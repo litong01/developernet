@@ -12,6 +12,7 @@ source ~/admin-openrc.sh
 echo "Creating flavors..."
 openstack flavor create --public m1.tiny --id 101 --ram 512 --disk 1 --vcpus 1 --rxtx-factor 1
 openstack flavor create --public m1.small --id 102 --ram 1024 --disk 2 --vcpus 1 --rxtx-factor 1
+openstack flavor create --public m1.medium --id 103 --ram 2048 --disk 4 --vcpus 1 --rxtx-factor 1
 
 source ~/demo-openrc.sh
 
