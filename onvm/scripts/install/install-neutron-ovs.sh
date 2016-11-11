@@ -30,9 +30,6 @@ iniset /etc/neutron/neutron.conf DEFAULT api_workers 3
 iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
 iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 
-#iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2
-#iniset /etc/neutron/neutron.conf DEFAULT notification_topics notifications
-
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
 iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1

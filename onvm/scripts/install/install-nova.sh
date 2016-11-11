@@ -28,8 +28,6 @@ iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip "$2"
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
-#iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
-#iniset /etc/nova/nova.conf DEFAULT notification_topics notifications
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path

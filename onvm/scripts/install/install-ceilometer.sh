@@ -11,8 +11,6 @@ apt-get -qqy install ceilometer-collector ceilometer-agent-notification
 
 iniset /etc/ceilometer/ceilometer.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/ceilometer/ceilometer.conf DEFAULT debug 'True'
-iniset /etc/ceilometer/ceilometer.conf DEFAULT notification_topics notifications
-iniset /etc/ceilometer/ceilometer.conf DEFAULT notification_driver messagingv2
 iniset /etc/ceilometer/ceilometer.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/ceilometer/ceilometer.conf DEFAULT dispatcher 'http'
 
