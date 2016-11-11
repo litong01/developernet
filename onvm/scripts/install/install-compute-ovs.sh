@@ -8,8 +8,8 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
-apt-get install -qqy "$leap_aptopt" neutron-plugin-ml2 \
-  neutron-openvswitch-agent neutron-l3-agent neutron-dhcp-agent haproxy
+apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent \
+  neutron-l3-agent neutron-dhcp-agent haproxy
 
 service nova-compute stop
 service neutron-openvswitch-agent stop
@@ -49,11 +49,9 @@ iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glan
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
 
-#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
-#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
-#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
-
-iniset /etc/nova/nova.conf oslo_messaging_notifications driver messaging
+iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
+iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
+iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
 
 iniset /etc/nova/nova.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/nova/nova.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
@@ -69,6 +67,7 @@ iniset /etc/nova/nova.conf keystone_authtoken password $1
 iniset /etc/nova/nova.conf neutron url http://$leap_logical2physical_neutron:9696
 #iniset /etc/nova/nova.conf neutron auth_uri http://$leap_logical2physical_keystone:5000
 #iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone/identity_v2_admin/v3
+iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone:35357
 iniset /etc/nova/nova.conf neutron auth_type 'password'
 iniset /etc/nova/nova.conf neutron project_domain_name 'default'
 iniset /etc/nova/nova.conf neutron user_domain_name 'default'
@@ -105,17 +104,24 @@ confset /etc/sysctl.conf net.bridge.bridge-nf-call-ip6tables 1
 echo 'Load the new kernel configuration'
 sysctl -p /etc/sysctl.conf
 
+iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
+iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'ml2'
+iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router'
+iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
-iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
-iniset /etc/neutron/neutron.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
-#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
-#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
+iniset /etc/neutron/neutron.conf DEFAULT api_workers 3
+iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
+iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 
-iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
-iniset /etc/neutron/neutron.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+
+iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
+iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_type 'password'
 iniset /etc/neutron/neutron.conf keystone_authtoken project_domain_name 'default'
 iniset /etc/neutron/neutron.conf keystone_authtoken user_domain_name 'default'
@@ -128,24 +134,21 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
+iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_status_changes 'True'
+iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_data_changes 'True'
+iniset /etc/neutron/neutron.conf DEFAULT nova_url "http://${leap_logical2physical_nova}:8774/v2"
+
+iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
+iniset /etc/neutron/neutron.conf nova auth_type 'password'
+iniset /etc/neutron/neutron.conf nova project_domain_name 'default'
+iniset /etc/neutron/neutron.conf nova user_domain_name 'default'
+iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
+iniset /etc/neutron/neutron.conf nova project_name 'service'
+iniset /etc/neutron/neutron.conf nova username 'nova'
+iniset /etc/neutron/neutron.conf nova password $1
 
 # Configure Modular Layer 2 agent /etc/neutron/plugins/ml2/openvswitch_agent.ini
 echo "Configure openvswitch agent"
-
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 type_drivers 'flat,vxlan'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 tenant_network_types 'vxlan'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 mechanism_drivers "openvswitch,l2population"
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2 extension_drivers 'port_security'
-
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_flat flat_networks 'public'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_vxlan vni_ranges '1:1000'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ml2_type_vxlan vxlan_group '239.1.1.1'
-
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan enable_vxlan 'True'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan l2_population 'False'
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan local_ip $3
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini vxlan vxlan_group '239.1.1.1'
-
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_security_group 'True'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_ipset 'True'
@@ -153,12 +156,12 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_dri
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings 'public:br-ex'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings 'public:br-ex'
 
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_types vxlan
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
 
 # Configure /etc/neutron/l3_agent.ini 
 echo "Configure the layer-3 agent"
@@ -173,21 +176,10 @@ iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 #Configure /etc/neutron/metadata_agent.ini
 echo "Configure the metadata agent"
 
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_uri "http://${leap_logical2physical_keystone}:5000"
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_url "http://${leap_logical2physical_keystone}:35357"
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_region 'RegionOne'
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_type 'password'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_name 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_name 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_name 'service'
-iniset /etc/neutron/metadata_agent.ini DEFAULT username 'neutron'
-iniset /etc/neutron/metadata_agent.ini DEFAULT password $1
-
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
-iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
 
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
@@ -197,7 +189,7 @@ inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
 # Configure /etc/neutron/dhcp_agent.ini
 echo "Configure the DHCP agent"
 
-iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'openvswitch'
+iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
 iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'

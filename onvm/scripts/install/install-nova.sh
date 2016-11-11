@@ -28,8 +28,8 @@ iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip "$2"
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
-iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
-iniset /etc/nova/nova.conf DEFAULT notification_topics notifications
+#iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
+#iniset /etc/nova/nova.conf DEFAULT notification_topics notifications
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
@@ -43,11 +43,9 @@ iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
 iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glance:9292
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
-#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
-#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
-#iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
-
-iniset /etc/nova/nova.conf oslo_messaging_notifications driver messaging
+iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
+iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
+iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
 
 
 iniset /etc/nova/nova.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000

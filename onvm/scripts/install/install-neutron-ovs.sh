@@ -25,15 +25,17 @@ iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
-#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
-#iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT api_workers 3
 iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
 iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 
-iniset /etc/neutron/neutron.conf oslo_messaging_notifications driver messaging
+#iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2
+#iniset /etc/neutron/neutron.conf DEFAULT notification_topics notifications
+
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
+iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
 
 
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
@@ -66,17 +68,18 @@ iniset /etc/neutron/neutron.conf nova password $1
 # Configure /etc/neutron/plugins/ml2/ml2_conf.ini
 echo "Configure Modular Layer 2 (ML2) plug-in"
 
-mkdir -p /etc/neutron/plugins/ml2
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'flat,vxlan'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types 'flat,vxlan'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types 'vxlan'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers 'port_security'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers "openvswitch,l2population"
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group 'True'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
+
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
+#iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
+
+#iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group 'True'
+#iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver iptables_hybrid
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovs local_ip $3
