@@ -106,10 +106,10 @@ unset OS_TOKEN
 unset OS_URL
 unset OS_IDENTITY_API_VERSION
 
-echo "Set up endpoints for glance, cinder, nova, heat, ceilometer and neutron"
+echo "Set up endpoints for glance, cinder, nova, and neutron"
 
 source ~/admin-openrc.sh
-for key in keystone neutron nova glance cinder heat; do
+for key in keystone neutron nova glance cinder; do
   openstack user create --domain default --password $1 $key
   openstack role add --project service --user $key admin
 done
@@ -151,22 +151,22 @@ openstack endpoint create --region RegionOne volumev2 admin http://$leap_logical
 
 
 # Orchestration setups
-openstack service create --name heat --description "Orchestration" orchestration
-openstack service create --name heat-cfn --description "Orchestration"  cloudformation
-eval pub_ip=\$leap_${leap_logical2physical_heat}_eth0; pub_ip=`echo $pub_ip`
-openstack endpoint create --region RegionOne orchestration public http://$pub_ip:8004/v1/%\(tenant_id\)s
-openstack endpoint create --region RegionOne orchestration internal http://$leap_logical2physical_heat:8004/v1/%\(tenant_id\)s
-openstack endpoint create --region RegionOne orchestration admin http://$leap_logical2physical_heat:8004/v1/%\(tenant_id\)s
+#openstack service create --name heat --description "Orchestration" orchestration
+#openstack service create --name heat-cfn --description "Orchestration"  cloudformation
+#eval pub_ip=\$leap_${leap_logical2physical_heat}_eth0; pub_ip=`echo $pub_ip`
+#openstack endpoint create --region RegionOne orchestration public http://$pub_ip:8004/v1/%\(tenant_id\)s
+#openstack endpoint create --region RegionOne orchestration internal http://$leap_logical2physical_heat:8004/v1/%\(tenant_id\)s
+#openstack endpoint create --region RegionOne orchestration admin http://$leap_logical2physical_heat:8004/v1/%\(tenant_id\)s
 
-openstack endpoint create --region RegionOne cloudformation public http://$pub_ip:8000/v1
-openstack endpoint create --region RegionOne cloudformation internal http://$leap_logical2physical_heat:8000/v1
-openstack endpoint create --region RegionOne cloudformation admin http://$leap_logical2physical_heat:8000/v1
+#openstack endpoint create --region RegionOne cloudformation public http://$pub_ip:8000/v1
+#openstack endpoint create --region RegionOne cloudformation internal http://$leap_logical2physical_heat:8000/v1
+#openstack endpoint create --region RegionOne cloudformation admin http://$leap_logical2physical_heat:8000/v1
 
-openstack domain create --description "Stack projects and users" heat
-openstack user create --domain heat --password $1 heat_domain_admin
-openstack role add --domain heat --user heat_domain_admin admin
-openstack role create heat_stack_owner
-openstack role add --project demo --user demo heat_stack_owner
-openstack role create heat_stack_user
+#openstack domain create --description "Stack projects and users" heat
+#openstack user create --domain heat --password $1 heat_domain_admin
+#openstack role add --domain heat --user heat_domain_admin admin
+#openstack role create heat_stack_owner
+#openstack role add --project demo --user demo heat_stack_owner
+#openstack role create heat_stack_user
 
 echo "Keystone setup is now complete!"

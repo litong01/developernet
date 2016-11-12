@@ -27,7 +27,7 @@ wait
 # Create needed databases
 IFS=. read -ra parts <<< $3 && subnet=`echo ${parts[0]}.${parts[1]}.${parts[2]}.%`
 echo "Management network:"${subnet}
-for db in keystone neutron nova glance cinder heat ceilometer; do
+for db in keystone neutron nova glance cinder; do
   mysql -uroot -p$1 -e "CREATE DATABASE $db;"
   mysql -uroot -p$1 -e "use $db; GRANT ALL PRIVILEGES ON $db.* TO '$db'@'localhost' IDENTIFIED BY '$1';"
   mysql -uroot -p$1 -e "use $db; GRANT ALL PRIVILEGES ON $db.* TO '$db'@'%' IDENTIFIED BY '$1';"

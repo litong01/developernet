@@ -18,20 +18,22 @@ service neutron-server stop
 # Configre /etc/neutron/neutron.conf
 echo "Configure the server component"
 
-iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'ml2'
 iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
-iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
 iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 1
 
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
+iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2
 
+iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_status_changes 'True'
+iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_data_changes 'True'
+iniset /etc/neutron/neutron.conf DEFAULT nova_url "http://${leap_logical2physical_nova}:8774/v2"
+
+iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
@@ -47,9 +49,6 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
-iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_status_changes 'True'
-iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_data_changes 'True'
-iniset /etc/neutron/neutron.conf DEFAULT nova_url "http://${leap_logical2physical_nova}:8774/v2"
 
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf nova auth_type 'password'
@@ -68,19 +67,20 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers 'port_securit
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers 'linuxbridge'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
+
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
+
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan l2_population 'False'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan vxlan_group '239.1.1.1'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings "vxlan:eth1"
-
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan l2_population 'False'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan vxlan_group '239.1.1.1'
 
 # clean up configuration files
 

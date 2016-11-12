@@ -31,7 +31,6 @@ logical2physical:
   horizon: controller
   glance: controller
   cinder: controller
-  heat: controller
   nova: controller
   neutron: controller
 
@@ -44,7 +43,6 @@ ctlnodes:
   - cinder
   - neutron
   - nova
-  - heat
   - horizon
 
 computenodes:
