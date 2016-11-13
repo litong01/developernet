@@ -9,13 +9,13 @@ apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent \
-  neutron-l3-agent neutron-dhcp-agent
+  neutron-l3-agent neutron-dhcp-agent haproxy
 
-service neutron-linuxbridge-agent stop
-service neutron-l3-agent stop
-service neutron-metadata-agent stop
-service neutron-dhcp-agent stop
 service nova-compute stop
+service neutron-linuxbridge-agent stop
+service neutron-metadata-agent stop
+service neutron-l3-agent stop
+service neutron-dhcp-agent stop
 
 echo "Compute packages are installed!"
 
@@ -60,6 +60,7 @@ iniset /etc/nova/nova.conf keystone_authtoken password $1
 
 # Configure compute to use Networking
 iniset /etc/nova/nova.conf neutron url http://$leap_logical2physical_neutron:9696
+iniset /etc/nova/nova.conf neutron auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/nova/nova.conf neutron auth_url http://$leap_logical2physical_keystone:35357
 iniset /etc/nova/nova.conf neutron auth_type 'password'
 iniset /etc/nova/nova.conf neutron project_domain_name 'default'
@@ -70,6 +71,7 @@ iniset /etc/nova/nova.conf neutron username 'neutron'
 iniset /etc/nova/nova.conf neutron password $1
 iniset /etc/nova/nova.conf neutron service_metadata_proxy 'True'
 iniset /etc/nova/nova.conf neutron metadata_proxy_shared_secret $1
+iniset /etc/nova/nova.conf neutron auth_strategy keystone
 
 
 # Configure nova to use cinder
@@ -85,7 +87,6 @@ fi
 # Configure neutron on compute node /etc/neutron/neutron.conf
 echo 'Configure neutron on compute node'
 
-
 confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
 confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
 confset /etc/sysctl.conf net.bridge.bridge-nf-call-iptables 1
@@ -96,13 +97,12 @@ sysctl -p
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
-iniset /etc/neutron/neutron.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2
 
-iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
-iniset /etc/neutron/neutron.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
+iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
+iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_type 'password'
 iniset /etc/neutron/neutron.conf keystone_authtoken project_domain_name 'default'
 iniset /etc/neutron/neutron.conf keystone_authtoken user_domain_name 'default'
@@ -168,20 +168,10 @@ iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 #Configure /etc/neutron/metadata_agent.ini
 echo "Configure the metadata agent"
 
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_uri "http://${leap_logical2physical_keystone}:5000"
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_url "http://${leap_logical2physical_keystone}:35357"
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_region 'RegionOne'
-iniset /etc/neutron/metadata_agent.ini DEFAULT auth_type 'password'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_domain_name 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT user_domain_name 'default'
-iniset /etc/neutron/metadata_agent.ini DEFAULT project_name 'service'
-iniset /etc/neutron/metadata_agent.ini DEFAULT username 'neutron'
-iniset /etc/neutron/metadata_agent.ini DEFAULT password $1
-
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT debug 'True'
+iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
 
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
 inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user

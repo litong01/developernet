@@ -50,7 +50,6 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
-iniset /etc/neutron/neutron.conf nova auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf nova auth_type 'password'
 iniset /etc/neutron/neutron.conf nova project_domain_name 'default'

@@ -25,11 +25,8 @@ iniset /etc/nova/nova.conf DEFAULT my_ip $3
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
 
-#iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
-#iniset /etc/nova/nova.conf DEFAULT security_group_api 'neutron'
 iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.LinuxOVSInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
-
 
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
@@ -90,7 +87,6 @@ fi
 # Configure neutron on compute node /etc/neutron/neutron.conf
 echo 'Configure neutron on compute node'
 
-
 # Configure the kernel to enable packet forwarding and disable reverse path filting
 echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
 confset /etc/sysctl.conf net.ipv4.ip_forward 1
@@ -105,7 +101,6 @@ sysctl -p /etc/sysctl.conf
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
-iniset /etc/neutron/neutron.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2

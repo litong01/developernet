@@ -23,8 +23,9 @@ iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'router'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
+iniset /etc/neutron/neutron.conf DEFAULT api_workers 3
 iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
-iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 1
+iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2
@@ -49,7 +50,6 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
-
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf nova auth_type 'password'
 iniset /etc/neutron/neutron.conf nova project_domain_name 'default'
@@ -60,11 +60,12 @@ iniset /etc/neutron/neutron.conf nova username 'nova'
 iniset /etc/neutron/neutron.conf nova password $1
 
 # Configure /etc/neutron/plugins/ml2/ml2_conf.ini
-mkdir -p /etc/neutron/plugins/ml2
+echo "Configure Modular Layer 2 (ML2) plug-in"
+
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 type_drivers 'flat,vxlan'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 tenant_network_types 'vxlan'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 extension_drivers 'port_security'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers 'linuxbridge'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2 mechanism_drivers 'linuxbridge,l2population'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_flat flat_networks 'public'
 
@@ -72,7 +73,7 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vni_ranges '1:1000'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1.1'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan l2_population 'False'
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan l2_population 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan vxlan_group '239.1.1.1'
 
