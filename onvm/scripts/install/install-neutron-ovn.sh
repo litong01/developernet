@@ -59,19 +59,20 @@ echo "Neutron and ovn packages are installed!"
 # Configre /etc/neutron/neutron.conf
 echo "Configure the server component"
 
-iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 iniset /etc/neutron/neutron.conf DEFAULT core_plugin 'neutron.plugins.ml2.plugin.Ml2Plugin'
 iniset /etc/neutron/neutron.conf DEFAULT service_plugins 'networking_ovn.l3.l3_ovn.OVNL3RouterPlugin'
 iniset /etc/neutron/neutron.conf DEFAULT allow_overlapping_ips 'True'
-iniset /etc/neutron/neutron.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT bind_host '0.0.0.0'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
 iniset /etc/neutron/neutron.conf DEFAULT network_scheduler_driver 'neutron.scheduler.dhcp_agent_scheduler.AZAwareWeightScheduler'
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+iniset /etc/neutron/neutron.conf DEFAULT notification_driver noop
 
 iniset /etc/neutron/neutron.conf DEFAULT dhcp_load_type 'networks'
 iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
+
+iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 
 iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
 iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$3:6641

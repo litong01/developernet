@@ -16,7 +16,7 @@ iniset /etc/cinder/cinder.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/cinder/cinder.conf DEFAULT my_ip $3
 
 iniset /etc/cinder/cinder.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/cinder/cinder.conf DEFAULT notification_driver messagingv2
+iniset /etc/cinder/cinder.conf DEFAULT notification_driver noop
 
 iniset /etc/cinder/cinder.conf database connection "mysql+pymysql://cinder:$1@${leap_logical2physical_mysqldb}/cinder"
 

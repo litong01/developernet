@@ -18,7 +18,7 @@ iniset /etc/cinder/cinder.conf DEFAULT enabled_backends 'lvm'
 iniset /etc/cinder/cinder.conf DEFAULT glance_host $leap_logical2physical_glance
 inidelete /etc/cinder/cinder.conf DEFAULT volume_group
 iniset /etc/cinder/cinder.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/cinder/cinder.conf DEFAULT notification_driver messagingv2
+iniset /etc/cinder/cinder.conf DEFAULT notification_driver noop
 
 iniset /etc/cinder/cinder.conf database connection mysql+pymysql://cinder:$1@$leap_logical2physical_mysqldb/cinder
 

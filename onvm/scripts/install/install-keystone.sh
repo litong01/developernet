@@ -19,7 +19,7 @@ service memcache restart
 iniset /etc/keystone/keystone.conf DEFAULT admin_token $1
 iniset /etc/keystone/keystone.conf DEFAULT debug "True"
 iniset /etc/keystone/keystone.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/keystone/keystone.conf DEFAULT notification_driver messagingv2
+iniset /etc/keystone/keystone.conf DEFAULT notification_driver noop
 
 iniset /etc/keystone/keystone.conf database connection mysql+pymysql://keystone:$1@$leap_logical2physical_mysqldb/keystone
 

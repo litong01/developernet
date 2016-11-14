@@ -28,7 +28,7 @@ iniset /etc/neutron/neutron.conf DEFAULT l3_ha True
 iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 
 iniset /etc/neutron/neutron.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/neutron/neutron.conf DEFAULT notification_driver messagingv2
+iniset /etc/neutron/neutron.conf DEFAULT notification_driver noop
 
 iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_status_changes 'True'
 iniset /etc/neutron/neutron.conf DEFAULT notify_nova_on_port_data_changes 'True'

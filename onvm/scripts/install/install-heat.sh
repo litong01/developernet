@@ -22,7 +22,7 @@ iniset /etc/heat/heat.conf DEFAULT stack_domain_admin_password $1
 iniset /etc/heat/heat.conf DEFAULT stack_user_domain_name 'heat'
 iniset /etc/heat/heat.conf DEFAULT num_engine_workers 4
 iniset /etc/heat/heat.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/heat/heat.conf DEFAULT notification_driver messagingv2
+iniset /etc/heat/heat.conf DEFAULT notification_driver noop
 
 iniset /etc/heat/heat.conf database connection "mysql+pymysql://heat:$1@${leap_logical2physical_mysqldb}/heat"
 

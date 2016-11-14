@@ -19,8 +19,6 @@ service nova-scheduler stop
 service nova-conductor stop
 service nova-novncproxy stop
 
-iniset /etc/nova/nova.conf api_database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova_api
-iniset /etc/nova/nova.conf database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip "$2"
@@ -29,11 +27,12 @@ iniset /etc/nova/nova.conf DEFAULT use_neutron True
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
 iniset /etc/nova/nova.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
-
+iniset /etc/nova/nova.conf DEFAULT notification_driver noop
 
 inidelete /etc/nova/nova.conf DEFAULT ec2_private_dns_show_ip
 
+iniset /etc/nova/nova.conf api_database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova_api
+iniset /etc/nova/nova.conf database connection mysql+pymysql://nova:$1@$leap_logical2physical_mysqldb/nova
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '$my_ip'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'

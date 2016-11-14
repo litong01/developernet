@@ -17,7 +17,7 @@ iniset /etc/nova/nova.conf DEFAULT my_ip $3
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT force_config_drive True
 iniset /etc/nova/nova.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
-iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
+iniset /etc/nova/nova.conf DEFAULT notification_driver noop
 iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
 iniset /etc/nova/nova.conf DEFAULT use_neutron 'True'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
