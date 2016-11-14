@@ -8,14 +8,10 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
-apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent \
-  neutron-l3-agent neutron-dhcp-agent haproxy
+apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent
 
 service nova-compute stop
 service neutron-openvswitch-agent stop
-service neutron-metadata-agent stop
-service neutron-l3-agent stop
-service neutron-dhcp-agent stop
 
 echo "Compute packages are installed!"
 
@@ -135,48 +131,9 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_types vxlan
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
 
-# Configure /etc/neutron/l3_agent.ini 
-echo "Configure the layer-3 agent"
-
-iniset /etc/neutron/l3_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
-iniset /etc/neutron/l3_agent.ini DEFAULT external_network_bridge 'br-ex'
-iniset /etc/neutron/l3_agent.ini DEFAULT debug 'True'
-iniset /etc/neutron/l3_agent.ini DEFAULT verbose 'True'
-iniset /etc/neutron/l3_agent.ini DEFAULT use_namespaces 'True'
-iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
-
-#Configure /etc/neutron/metadata_agent.ini
-echo "Configure the metadata agent"
-
-metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
-eval metahost=$metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
-iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
-
-inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_tenant_name
-inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_user
-inidelete /etc/neutron/metadata_agent.ini DEFAULT admin_password
-
-
-# Configure /etc/neutron/dhcp_agent.ini
-echo "Configure the DHCP agent"
-
-iniset /etc/neutron/dhcp_agent.ini DEFAULT interface_driver 'neutron.agent.linux.interface.OVSInterfaceDriver'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_driver 'neutron.agent.linux.dhcp.Dnsmasq'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT enable_isolated_metadata 'True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT use_namespaces ' True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dhcp_delete_namespaces 'True'
-iniset /etc/neutron/dhcp_agent.ini DEFAULT dnsmasq_config_file '/etc/neutron/dnsmasq-neutron.conf'
-
-echo 'dhcp-option-force=26,1454' > /etc/neutron/dnsmasq-neutron.conf
-
-
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
-iniremcomment /etc/neutron/dhcp_agent.ini
-iniremcomment /etc/neutron/l3_agent.ini
-iniremcomment /etc/neutron/metadata_agent.ini
 
 
 rm -f /var/lib/nova/nova.sqlite
@@ -189,9 +146,6 @@ ovs-vsctl add-br br-ex
 echo "Start services..."
 service nova-compute start
 service neutron-openvswitch-agent start
-service neutron-l3-agent start
-service neutron-dhcp-agent start
-service neutron-metadata-agent start
 
 #echo "Configuring bridges"
 

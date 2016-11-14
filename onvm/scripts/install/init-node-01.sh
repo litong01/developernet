@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# $1 sys_password
-# $2 public net id
-# $3 public net start_ip
-# $4 public net end_ip
-# $5 public net gateway
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -18,8 +13,9 @@ neutron net-create internet --shared --router:external True \
   --provider:physical_network public \
   --provider:network_type flat
 
-neutron subnet-create internet $2 --name internet-subnet --allocation-pool \
-  start=$3,end=$4 --dns-nameserver 8.8.4.4 --gateway $5
+neutron subnet-create internet $leap_public_net_cidr --name internet-subnet \
+  --allocation-pool start=$leap_public_net_start_ip,end=$leap_public_net_end_ip \
+  --dns-nameserver 8.8.4.4 --gateway $leap_public_net_gateway
 
 source ~/demo-openrc.sh
 neutron net-create demonet

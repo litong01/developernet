@@ -24,6 +24,10 @@ public_net:
 # server to run multiple services, simply map multiple services into one
 # physical node. The following setup uses one machine named controller to run
 # mysqldb, keystone, rabbitmq, horizon, glance, cinder and neutron services.
+# Some nodes can be multiples, some nodes can not be multiples. For example,
+# there should be just one mysqldb node, rabbitmq, keystone, horizon, neutron,
+# glance, cinder and node. But there can be multiple cinder storage node,
+# multiple compute and network nodes.
 logical2physical:
   mysqldb: controller
   rabbitmq: controller
@@ -33,6 +37,9 @@ logical2physical:
   cinder: controller
   nova: controller
   neutron: controller
+  network: [compute01, compute02]
+  cinderstorage: [compute01, compute02]
+  compute: [compute01, compute02]
 
 # Define how many logical nodes and the sequence of the installation
 ctlnodes:
@@ -44,14 +51,14 @@ ctlnodes:
   - neutron
   - nova
   - horizon
-
-computenodes:
-  - compute01
-  - compute02
+  - network
+  - cinderstorage
+  - compute
 
 suffixes:
   - compute
   - neutron
+  - network
 
 timezone: America\/New_York
 
