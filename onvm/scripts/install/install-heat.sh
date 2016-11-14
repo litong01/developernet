@@ -11,8 +11,6 @@ apt-get install -qqy "$leap_aptopt" heat-api heat-api-cfn heat-engine python-hea
 
 echo "Heat packages are installed!"
 
-iniset /etc/heat/heat.conf database connection "mysql+pymysql://heat:$1@${leap_logical2physical_mysqldb}/heat"
-iniset /etc/heat/heat.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/heat/heat.conf DEFAULT debug 'True'
 iniset /etc/heat/heat.conf DEFAULT auth_strategy 'keystone'
 
@@ -23,10 +21,10 @@ iniset /etc/heat/heat.conf DEFAULT stack_domain_admin 'heat_domain_admin'
 iniset /etc/heat/heat.conf DEFAULT stack_domain_admin_password $1
 iniset /etc/heat/heat.conf DEFAULT stack_user_domain_name 'heat'
 iniset /etc/heat/heat.conf DEFAULT num_engine_workers 4
+iniset /etc/heat/heat.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+iniset /etc/heat/heat.conf DEFAULT notification_driver messagingv2
 
-iniset /etc/heat/heat.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
-iniset /etc/heat/heat.conf oslo_messaging_rabbit rabbit_userid openstack
-iniset /etc/heat/heat.conf oslo_messaging_rabbit rabbit_password $1
+iniset /etc/heat/heat.conf database connection "mysql+pymysql://heat:$1@${leap_logical2physical_mysqldb}/heat"
 
 iniset /etc/heat/heat.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/heat/heat.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"

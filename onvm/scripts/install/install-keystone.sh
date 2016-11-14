@@ -17,10 +17,12 @@ sed -i -e "s/127.0.0.1/$3/1" /etc/memcached.conf
 service memcache restart
 
 iniset /etc/keystone/keystone.conf DEFAULT admin_token $1
-iniset /etc/keystone/keystone.conf DEFAULT rpc_backend rabbit
 iniset /etc/keystone/keystone.conf DEFAULT debug "True"
+iniset /etc/keystone/keystone.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+iniset /etc/keystone/keystone.conf DEFAULT notification_driver messagingv2
 
 iniset /etc/keystone/keystone.conf database connection mysql+pymysql://keystone:$1@$leap_logical2physical_mysqldb/keystone
+
 iniset /etc/keystone/keystone.conf memcache servers "localhost:11211"
 iniset /etc/keystone/keystone.conf token provider fernet
 iniset /etc/keystone/keystone.conf token driver memcache
@@ -31,18 +33,9 @@ su -s /bin/sh -c "keystone-manage db_sync" keystone
 keystone-manage fernet_setup --keystone-user keystone --keystone-group keystone
 keystone-manage credential_setup --keystone-user keystone --keystone-group keystone
 
-iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
-iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_userid openstack
-iniset /etc/keystone/keystone.conf oslo_messaging_rabbit rabbit_password $1
-
 echo "ServerName ${leap_logical2physical_keystone}" >> /etc/apache2/apache2.conf
 
-
-
 echo "Keystone configuration is done!"
-
-#cp /onvm/conf/wsgi-keystone.conf /etc/apache2/sites-available/
-#ln -s /etc/apache2/sites-available/wsgi-keystone.conf /etc/apache2/sites-enabled
 
 iniremcomment /etc/keystone/keystone.conf
 

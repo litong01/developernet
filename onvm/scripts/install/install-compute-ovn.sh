@@ -11,13 +11,13 @@ apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 service nova-compute stop
 echo "Nova Compute packages are installed!"
 
-iniset /etc/nova/nova.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip $3
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT force_config_drive True
-
+iniset /etc/nova/nova.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+iniset /etc/nova/nova.conf DEFAULT notification_driver messagingv2
 iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
 iniset /etc/nova/nova.conf DEFAULT use_neutron 'True'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
@@ -26,7 +26,6 @@ metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
 eval metahost=$metahost
 iniset /etc/nova/nova.conf DEFAULT metadata_host $metahost
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
-iniset /etc/nova/nova.conf DEFAULT rabbit_host $leap_logical2physical_rabbitmq
 
 iniset /etc/nova/nova.conf vnc vncserver_listen '0.0.0.0'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
@@ -39,11 +38,6 @@ iniset /etc/nova/nova.conf vnc novncproxy_base_url http://$vnchost:6080/vnc_auto
 iniset /etc/nova/nova.conf glance api_servers http://$leap_logical2physical_glance:9292
 
 iniset /etc/nova/nova.conf oslo_concurrency lock_path '/var/lib/nova/tmp'
-
-iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_host $leap_logical2physical_rabbitmq
-iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_userid openstack
-iniset /etc/nova/nova.conf oslo_messaging_rabbit rabbit_password $1
-
 
 iniset /etc/nova/nova.conf keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/nova/nova.conf keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357

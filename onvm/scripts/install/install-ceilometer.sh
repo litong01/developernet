@@ -9,16 +9,13 @@ apt-get update
 
 apt-get -qqy install ceilometer-collector ceilometer-agent-notification
 
-iniset /etc/ceilometer/ceilometer.conf DEFAULT rpc_backend 'rabbit'
 iniset /etc/ceilometer/ceilometer.conf DEFAULT debug 'True'
 iniset /etc/ceilometer/ceilometer.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/ceilometer/ceilometer.conf DEFAULT dispatcher 'http'
+iniset /etc/ceilometer/ceilometer.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
+iniset /etc/ceilometer/ceilometer.conf DEFAULT notification_driver messagingv2
 
 iniset /etc/ceilometer/ceilometer.conf database connection mysql+pymysql://ceilometer:$1@$leap_logical2physical_mysqldb/ceilometer
-
-iniset /etc/ceilometer/ceilometer.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
-iniset /etc/ceilometer/ceilometer.conf oslo_messaging_rabbit rabbit_userid openstack
-iniset /etc/ceilometer/ceilometer.conf oslo_messaging_rabbit rabbit_password $1
 
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
