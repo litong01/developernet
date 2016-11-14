@@ -77,10 +77,6 @@ iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
 iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$3:6641
 iniset /etc/neutron/neutron.conf ovn ovn_sb_connection tcp:$3:6642
 
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_host "${leap_logical2physical_rabbitmq}"
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_userid 'openstack'
-iniset /etc/neutron/neutron.conf oslo_messaging_rabbit rabbit_password $1
-
 mkdir -p /var/lib/neutron
 iniset /etc/neutron/neutron.conf oslo_concurrency lock_path /var/lib/neutron
 

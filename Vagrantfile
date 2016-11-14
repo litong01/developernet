@@ -40,8 +40,9 @@ Vagrant.configure("2") do |config|
         pnodes = [].push(pnodes)
       end
       pnodes.each do | pnode |
-        config.vm.define "#{key}-#{pnode}" do |node|
-          node.vm.hostname = "#{key}-#{pnode}"
+        vmname = (pnodes.length > 1)? "#{key}-#{pnode}":"#{key}"
+        config.vm.define "#{vmname}" do |node|
+          node.vm.hostname = "#{vmname}"
 
           if sync_cfg['nodes'].index(key)
             node.vm.synced_folder sync_cfg['folder'], "/leapbin", disabled: false, create: true
@@ -59,7 +60,6 @@ Vagrant.configure("2") do |config|
       end
     end
   end
-
 
   # do initial setup to create public and private network
   # all initialization should run on keystone node
