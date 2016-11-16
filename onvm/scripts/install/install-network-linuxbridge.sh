@@ -7,11 +7,13 @@ source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
-apt-get install -qqy "$leap_aptopt" neutron-l3-agent neutron-dhcp-agent haproxy
+apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent \
+  neutron-l3-agent neutron-dhcp-agent haproxy
 
 service neutron-metadata-agent stop
 service neutron-l3-agent stop
 service neutron-dhcp-agent stop
+service neutron-linuxbridge-agent stop
 
 echo "Network node packages are installed!"
 
@@ -35,6 +37,34 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken identity_uri
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
+
+# Configure the OVS agent /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+
+echo "Configure Modular Layer 2 (ML2) plug-in"
+
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini ml2_type_flat flat_networks 'public'
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini ml2_type_vxlan vni_ranges '1:1000'
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini ml2_type_vxlan vxlan_group '239.1.1.1'
+
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_ipset 'True'
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "public:${leap_pubnic},vxlan:eth1"
+
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan 'True'
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population 'True'
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan vxlan_group '239.1.1.1'
+
+# Configure the kernel to enable packet forwarding and disable reverse path filting
+echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
+confset /etc/sysctl.conf net.ipv4.ip_forward 1
+confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
+confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
+
+echo 'Load the new kernel configuration'
+sysctl -p
 
 # Configure /etc/neutron/l3_agent.ini 
 echo "Configure the layer-3 agent"
@@ -75,10 +105,12 @@ iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
 iniremcomment /etc/neutron/dhcp_agent.ini
+iniremcomment /etc/neutron/plugins/ml2/linuxbridge_agent.ini
 
 rm -f /var/lib/nova/nova.sqlite
 rm -r -f /var/log/nova/* /var/log/neutron/*
 
+service neutron-linuxbridge-agent start
 service neutron-metadata-agent start
 service neutron-l3-agent start
 service neutron-dhcp-agent start

@@ -7,13 +7,27 @@ source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get -qqy update
 
-apt-get install -qqy "$leap_aptopt" neutron-l3-agent neutron-dhcp-agent haproxy
+apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent \
+  neutron-l3-agent neutron-dhcp-agent haproxy
 
 service neutron-metadata-agent stop
 service neutron-l3-agent stop
 service neutron-dhcp-agent stop
+service neutron-openvswitch-agent stop
 
 echo "Network node packages are installed!"
+
+
+# Configure the kernel to enable packet forwarding and disable reverse path filting
+echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
+confset /etc/sysctl.conf net.ipv4.ip_forward 1
+confset /etc/sysctl.conf net.ipv4.conf.default.rp_filter 0
+confset /etc/sysctl.conf net.ipv4.conf.all.rp_filter 0
+confset /etc/sysctl.conf net.bridge.bridge-nf-call-iptables 1
+confset /etc/sysctl.conf net.bridge.bridge-nf-call-ip6tables 1
+
+echo 'Load the new kernel configuration'
+sysctl -p /etc/sysctl.conf
 
 # Configure neutron on compute node /etc/neutron/neutron.conf
 echo 'Configure neutron network node node'
@@ -38,6 +52,22 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken identity_uri
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_tenant_name
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_user
 inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
+
+# Configure Modular Layer 2 agent /etc/neutron/plugins/ml2/openvswitch_agent.ini
+echo "Configure openvswitch agent"
+
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_security_group 'True'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_ipset 'True'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings 'public:br-ex'
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
+
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent tunnel_types vxlan
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
 
 # Configure /etc/neutron/l3_agent.ini 
 echo "Configure the layer-3 agent"
@@ -77,10 +107,22 @@ iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/dhcp_agent.ini
 iniremcomment /etc/neutron/l3_agent.ini
 iniremcomment /etc/neutron/metadata_agent.ini
+iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
+
+echo 'Adding br-ex bridge...'
+ovs-vsctl add-br br-ex
 
 echo "Start services..."
+service neutron-openvswitch-agent start
 service neutron-l3-agent start
 service neutron-dhcp-agent start
 service neutron-metadata-agent start
+
+#echo "Configuring bridges"
+
+echo "Adding public nic to ovs bridge..."
+br_ex_ip=$(ip -4 addr show $leap_pubnic | awk '/inet / {print $2}')
+default_gw=$(route -n | awk '/^0.0.0.0 /{print $2}')
+ip addr del $br_ex_ip dev $leap_pubnic; ip addr add $br_ex_ip brd + dev br-ex; ovs-vsctl add-port br-ex $leap_pubnic; ip link set dev br-ex up; ip route add default via $default_gw dev br-ex
 
 echo "Neutron network setup is now complete!"

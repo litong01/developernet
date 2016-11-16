@@ -10,6 +10,11 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 sp=$(grep $1 /etc/hosts)
 if [ ! "$sp" ];then
 
+  echo -e "\nauto eth1" >> /etc/network/interfaces
+  echo -e "iface eth1 inet static" >> /etc/network/interfaces
+  echo -e "  address $3" >> /etc/network/interfaces
+  echo -e "  netmask 255.255.255.0" >> /etc/network/interfaces
+
   sed -i '/^127.0.1.1/d' /etc/hosts
   cat /onvm/conf/hosts >> /etc/hosts
 

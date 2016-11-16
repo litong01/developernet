@@ -139,18 +139,8 @@ iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
 rm -f /var/lib/nova/nova.sqlite
 rm -r -f /var/log/nova/* /var/log/neutron/*
 
-
-echo 'Adding br-ex bridge...'
-ovs-vsctl add-br br-ex
-
 echo "Start services..."
 service nova-compute start
 service neutron-openvswitch-agent start
-
-#echo "Configuring bridges"
-
-echo "Adding public nic to ovs bridge..."
-br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
-ifconfig $leap_pubnic 0.0.0.0; ifconfig br-ex $br_ex_ip; ovs-vsctl add-port br-ex $leap_pubnic
 
 echo "Compute setup is now complete!"

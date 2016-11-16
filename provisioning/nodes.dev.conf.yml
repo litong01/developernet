@@ -51,9 +51,9 @@ ctlnodes:
   - neutron
   - nova
   - horizon
-  - network
   - cinderstorage
   - compute
+  - network
 
 suffixes:
   - compute

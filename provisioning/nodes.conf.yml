@@ -1,33 +1,33 @@
 ---
+compute1:
+  host_name: compute1.leap.dev
+  eth0: 9.30.217.4
+  eth1: 192.168.217.4
+
+compute2:
+  host_name: compute2.leap.dev
+  eth0: 9.30.217.5
+  eth1: 192.168.217.5
+
+compute3:
+  host_name: compute3.leap.dev
+  eth0: 9.30.217.6
+  eth1: 192.168.217.6
+
+compute4:
+  host_name: compute4.leap.dev
+  eth0: 9.30.217.7
+  eth1: 192.168.217.7
+
+compute5:
+  host_name: compute5.leap.dev
+  eth0: 9.30.217.8
+  eth1: 192.168.217.8
+
 controller:
   host_name: controller.leap.dev
   eth0: 9.30.217.9
   eth1: 192.168.217.9
-
-compute01:
-  host_name: compute01.leap.dev
-  eth0: 9.30.217.8
-  eth1: 192.168.217.8
-
-compute02:
-  host_name: compute02.leap.dev
-  eth0: 9.30.217.7
-  eth1: 192.168.217.7
-
-compute03:
-  host_name: compute03.leap.dev
-  eth0: 9.30.217.6
-  eth1: 192.168.217.6
-
-compute04:
-  host_name: compute04.leap.dev
-  eth0: 9.30.217.5
-  eth1: 192.168.217.5
-
-compute05:
-  host_name: compute05.leap.dev
-  eth0: 9.30.217.4
-  eth1: 192.168.217.4
 
 public_net:
   cidr: 9.30.217.1/26
@@ -38,18 +38,24 @@ public_net:
 
 # Logical node to physical node mapping, if you like to use one physical
 # server to run multiple services, simply map multiple services into one
-# physical node. The following setup uses one machine named keystone to run
-# keystone, rabbitmq and horizon services.
+# physical node. The following setup uses one machine named controller to run
+# mysqldb, keystone, rabbitmq, horizon, glance, cinder and neutron services.
+# Some nodes can be multiples, some nodes can not be multiples. For example,
+# there should be just one mysqldb node, rabbitmq, keystone, horizon, neutron,
+# glance, cinder and node. But there can be multiple cinder storage node,
+# multiple compute and network nodes.
 logical2physical:
   mysqldb: controller
-  keystone: controller
   rabbitmq: controller
+  keystone: controller
   horizon: controller
   glance: controller
   cinder: controller
-  neutron: controller
   nova: controller
-  heat: controller
+  neutron: controller
+  network: [compute4, compute5]
+  cinderstorage: [compute1, compute2, compute3, compute4, compute5]
+  compute: [compute1, compute2, compute3, compute4, compute5]
 
 # Define how many logical nodes and the sequence of the installation
 ctlnodes:
@@ -60,25 +66,21 @@ ctlnodes:
   - cinder
   - neutron
   - nova
-  - heat
   - horizon
-
-computenodes:
-  - compute01
-  - compute02
-  - compute03
-  - compute04
-  - compute05
+  - cinderstorage
+  - compute
+  - network
 
 suffixes:
   - compute
   - neutron
+  - network
 
 timezone: America\/Los_Angeles
 
 cindervg: vg00
 
-glance_image_location: /storage/images
+glance_image_location: /home/images
 
 ntpserver: mysqldb
 
@@ -88,24 +90,23 @@ pubnic: eth0
 
 uselocalrepo: no
 
-aptopt: --force-yes
+aptopt:
 
 instances_path: /var/lib/nova/instances
 
-# The supported network types are openvswitch, linuxbridge and ovn
+# The supported network types are ovs, linuxbridge and ovn
 #
-network: linuxbridge
-
+network: ovs
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root
 synchfolders:
   ovn: 
-    folder: ovnbin/debian1404.ovs2.5.90
-    nodes: [neutron, compute01, compute02, compute03, compute04, compute05]
+    folder: ../cloudimages
+    nodes: [keystone]
   ovs: 
-    folder:
-    nodes: []
+    folder: ../cloudimages
+    nodes: [keystone]
   linuxbridge:
-    folder:
-    nodes: []
+    folder: ../cloudimages
+    nodes: [keystone]
