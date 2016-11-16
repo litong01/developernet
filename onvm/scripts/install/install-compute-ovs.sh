@@ -139,6 +139,9 @@ iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
 rm -f /var/lib/nova/nova.sqlite
 rm -r -f /var/log/nova/* /var/log/neutron/*
 
+echo 'Adding br-ex bridge...'
+ovs-vsctl --may-exist add-br br-ex
+
 echo "Start services..."
 service nova-compute start
 service neutron-openvswitch-agent start

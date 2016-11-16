@@ -110,7 +110,8 @@ iniremcomment /etc/neutron/metadata_agent.ini
 iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
 
 echo 'Adding br-ex bridge...'
-ovs-vsctl add-br br-ex
+ovs-vsctl --may-exist add-br br-ex
+
 
 echo "Start services..."
 service neutron-openvswitch-agent start
