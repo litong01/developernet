@@ -124,7 +124,6 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_dri
 
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings 'public:br-ex'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs tunnel_bridge br-tun
 
@@ -139,8 +138,6 @@ iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
 rm -f /var/lib/nova/nova.sqlite
 rm -r -f /var/log/nova/* /var/log/neutron/*
 
-echo 'Adding br-ex bridge...'
-ovs-vsctl --may-exist add-br br-ex
 
 echo "Start services..."
 service nova-compute start
