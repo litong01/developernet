@@ -112,7 +112,6 @@ iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
 echo 'Adding br-ex bridge...'
 ovs-vsctl --may-exist add-br br-ex
 
-
 echo "Start services..."
 service neutron-openvswitch-agent start
 service neutron-l3-agent start
@@ -124,6 +123,31 @@ service neutron-metadata-agent start
 echo "Adding public nic to ovs bridge..."
 br_ex_ip=$(ip -4 addr show $leap_pubnic | awk '/inet / {print $2}')
 default_gw=$(route -n | awk '/^0.0.0.0 /{print $2}')
+
+echo 'Process interfaces file to make changes permanent...'
+pos=$(sed -n "/^auto $leap_pubnic/,/^auto/=" /etc/network/interfaces)
+pos=$(echo $pos); read -r -a pos <<< "$pos"
+netmask=$(ifconfig "$leap_pubnic" | awk -F ':' '/inet / {print $4}')
+sed -i "${pos[0]},${pos[-2]}d" /etc/network/interfaces
+
+echo "" >> /etc/network/interfaces
+echo "auto br-ex" >> /etc/network/interfaces
+echo "allow-ovs br-ex" >> /etc/network/interfaces
+echo "iface br-ex inet static" >> /etc/network/interfaces
+echo "  ovs_type OVSBridge" >> /etc/network/interfaces
+echo "  ovs_ports $leap_pubnic" >> /etc/network/interfaces
+echo "  address $br_ex_ip" >> /etc/network/interfaces
+echo "  netmask $netmask" >> /etc/network/interfaces
+echo "  gateway $default_gw" >> /etc/network/interfaces
+echo "  dns-nameservers 8.8.8.8 8.8.4.4" >> /etc/network/interfaces
+
+echo "" >> /etc/network/interfaces
+echo "auto $leap_pubnic" >> /etc/network/interfaces
+echo "allow-br-ex $leap_pubnic" >> /etc/network/interfaces
+echo "iface $leap_pubnic inet manual" >> /etc/network/interfaces
+echo "  ovs_type OVSPort" >> /etc/network/interfaces
+echo "  ovs_bridge br-ex" >> /etc/network/interfaces
+
 ip addr del $br_ex_ip dev $leap_pubnic; ip addr add $br_ex_ip brd + dev br-ex; ovs-vsctl add-port br-ex $leap_pubnic; ip link set dev br-ex up; ip route add default via $default_gw dev br-ex
 
 echo "Neutron network setup is now complete!"
