@@ -10,6 +10,11 @@ apt-get -qqy update
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 apt-get install -qqy "$leap_aptopt" neutron-openvswitch-agent
 
+# Get rid of virbr0
+virsh net-destroy default
+virsh net-undefine default
+
+
 service nova-compute stop
 service neutron-openvswitch-agent stop
 
@@ -133,7 +138,6 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini agent l2_population True
 iniremcomment /etc/nova/nova.conf
 iniremcomment /etc/neutron/neutron.conf
 iniremcomment /etc/neutron/plugins/ml2/openvswitch_agent.ini
-
 
 rm -f /var/lib/nova/nova.sqlite
 rm -r -f /var/log/nova/* /var/log/neutron/*

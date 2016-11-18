@@ -8,6 +8,11 @@ eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
 apt-get update
 
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
+
+# Get rid of virbr0
+virsh net-destroy default
+virsh net-undefine default
+
 service nova-compute stop
 echo "Nova Compute packages are installed!"
 
@@ -121,10 +126,6 @@ echo 'Load the new kernel configuration'
 sysctl -p
 
 service nova-compute start
-
-# Get rid of virbr0
-virsh net-destroy default
-virsh net-undefine default
 
 echo 'Services on compute node started!'
 
