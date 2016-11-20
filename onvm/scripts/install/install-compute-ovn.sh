@@ -130,5 +130,32 @@ service nova-compute start
 echo 'Services on compute node started!'
 
 echo "Adding public nic to ovs bridge..."
-br_ex_ip=$(ifconfig $leap_pubnic | awk -F"[: ]+" '/inet addr:/ {print $4}')
+br_ex_ip=$(ip -4 addr show $leap_pubnic | awk '/inet / {print $2}')
+default_gw=$(route -n | awk '/^0.0.0.0 /{print $2}')
+
+echo 'Process interfaces file to make changes permanent...'
+pos=$(sed -n "/^auto $leap_pubnic/,/^auto/=" /etc/network/interfaces)
+pos=$(echo $pos); read -r -a pos <<< "$pos"
+netmask=$(ifconfig "$leap_pubnic" | awk -F ':' '/inet / {print $4}')
+sed -i "${pos[0]},${pos[-2]}d" /etc/network/interfaces
+
+echo "" >> /etc/network/interfaces
+echo "auto br-ex" >> /etc/network/interfaces
+echo "allow-ovs br-ex" >> /etc/network/interfaces
+echo "iface br-ex inet static" >> /etc/network/interfaces
+echo "  ovs_type OVSBridge" >> /etc/network/interfaces
+echo "  ovs_ports $leap_pubnic" >> /etc/network/interfaces
+echo "  address $br_ex_ip" >> /etc/network/interfaces
+echo "  netmask $netmask" >> /etc/network/interfaces
+echo "  gateway $default_gw" >> /etc/network/interfaces
+echo "  dns-nameservers 8.8.8.8 8.8.4.4" >> /etc/network/interfaces
+
+echo "" >> /etc/network/interfaces
+echo "auto $leap_pubnic" >> /etc/network/interfaces
+echo "allow-br-ex $leap_pubnic" >> /etc/network/interfaces
+echo "iface $leap_pubnic inet manual" >> /etc/network/interfaces
+echo "  ovs_type OVSPort" >> /etc/network/interfaces
+echo "  ovs_bridge br-ex" >> /etc/network/interfaces
+
+
 ovs-vsctl add-port br-ex $leap_pubnic;ifconfig $leap_pubnic 0.0.0.0;ifconfig br-ex $br_ex_ip
