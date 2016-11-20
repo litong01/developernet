@@ -14,6 +14,12 @@ compute02:
   eth0: 192.168.56.33
   eth1: 10.0.2.27
 
+compute03:
+  host_name: compute03.leap.dev
+  eth0: 192.168.56.30
+  eth1: 10.0.2.28
+
+
 public_net:
   cidr: 192.168.56.0/24
   start_ip: 192.168.56.50
@@ -38,8 +44,8 @@ logical2physical:
   nova: controller
   neutron: controller
   network: [compute01, compute02]
-  cinderstorage: [compute01, compute02]
-  compute: [compute01, compute02]
+  cinderstorage: [compute01, compute02, compute03]
+  compute: [compute01, compute02, compute03]
 
 # Define how many logical nodes and the sequence of the installation
 ctlnodes:

@@ -3,7 +3,7 @@ export LEAP=DEVELOPMENT
 export VAGRANT_VAGRANTFILE="Vagrantfile"
 rm -r -f .vagrant
 
-machines=('os-controller' 'os-compute01' 'os-compute02')
+machines=('os-controller' 'os-compute01' 'os-compute02' 'os-compute03')
 snapshot=${1:-"Snapshot 2"}
 
 for key in ${machines[@]}; do
