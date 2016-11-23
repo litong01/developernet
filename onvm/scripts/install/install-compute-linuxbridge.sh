@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -15,16 +13,19 @@ service neutron-linuxbridge-agent stop
 
 echo "Compute packages are installed!"
 
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
+
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
-iniset /etc/nova/nova.conf DEFAULT my_ip $3
+iniset /etc/nova/nova.conf DEFAULT my_ip $my_ip
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
 
 iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
 
-metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_'$leap_tunnelnic)
 eval metahost=$metahost
 iniset /etc/nova/nova.conf DEFAULT metadata_host $metahost
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
@@ -36,7 +37,7 @@ iniset /etc/nova/nova.conf vnc vncserver_listen '0.0.0.0'
 iniset /etc/nova/nova.conf vnc vncserver_proxyclient_address '$my_ip'
 iniset /etc/nova/nova.conf vnc enabled 'True'
 
-vnchost=$(echo '$leap_'$leap_logical2physical_nova'_eth0')
+vnchost=$(echo '$leap_'$leap_logical2physical_nova'_'$leap_publicnic)
 eval vnchost=$vnchost
 iniset /etc/nova/nova.conf vnc novncproxy_base_url http://$vnchost:6080/vnc_auto.html
 
@@ -126,7 +127,7 @@ iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_dri
 
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population 'True'
-iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $my_ip
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan vxlan_group '239.1.1.1'
 
 # Configure the kernel to enable packet forwarding and disable reverse path filting

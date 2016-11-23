@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -19,9 +17,13 @@ service nova-scheduler stop
 service nova-conductor stop
 service nova-novncproxy stop
 
+
+pub_cidr=$(ip -4 addr show $leap_publicnic | awk -F '/' '/inet / {print $1}')
+arr=($pub_cidr); pub_ip="${arr[1]}"
+
 iniset /etc/nova/nova.conf DEFAULT debug 'True'
 iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
-iniset /etc/nova/nova.conf DEFAULT my_ip "$2"
+iniset /etc/nova/nova.conf DEFAULT my_ip "$pub_ip"
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'

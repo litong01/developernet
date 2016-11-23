@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -16,6 +14,9 @@ service neutron-dhcp-agent stop
 service neutron-linuxbridge-agent stop
 
 echo "Network node packages are installed!"
+
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
 
 iniset /etc/neutron/neutron.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/neutron/neutron.conf DEFAULT debug 'True'
@@ -50,11 +51,11 @@ iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_ipset
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "public:${leap_pubnic},vxlan:eth1"
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "public:${leap_publicnic},vxlan:${leap_tunnelnic}"
 
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population 'True'
-iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan local_ip $my_ip
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan vxlan_group '239.1.1.1'
 
 # Configure the kernel to enable packet forwarding and disable reverse path filting
@@ -79,7 +80,7 @@ iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 #Configure /etc/neutron/metadata_agent.ini
 echo "Configure the metadata agent"
 
-metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_'$leap_tunnelnic)
 eval metahost=$metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1

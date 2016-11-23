@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -16,16 +14,20 @@ apt-get install -qqy dkms openvswitch-common openvswitch-switch ovn-common \
   ovn-central
 
 echo 'All OVN packages are installed!'
-echo 'Grant permission to the ovsdb so others can access via eth1 interface'
+
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
+
+echo "Grant permission to the ovsdb so others can access via ${leap_tunnelnic} interface"
 
 # OVN Northbound database needs open for neutron ovn plugin
-ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6641:$3
+ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6641:$my_ip
 
 # OVN Southbound database needs open to compute nodes
-ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6642:$3
+ovs-appctl -t ovsdb-server ovsdb-server/add-remote ptcp:6642:$my_ip
 
 
-neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_eth1')
+neutronhost=$(echo '$leap_'$leap_logical2physical_neutron'_'$leap_tunnelnic)
 eval neutronhost=$neutronhost
 
 echo "export OVN_NB_DB=tcp:$neutronhost:6641" >> ~/.bash_profile
@@ -75,8 +77,8 @@ iniset /etc/neutron/neutron.conf DEFAULT dhcp_agents_per_network 2
 iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1@${leap_logical2physical_mysqldb}/neutron"
 
 iniset /etc/neutron/neutron.conf ovn ovn_l3_mode True
-iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$3:6641
-iniset /etc/neutron/neutron.conf ovn ovn_sb_connection tcp:$3:6642
+iniset /etc/neutron/neutron.conf ovn ovn_nb_connection tcp:$my_ip:6641
+iniset /etc/neutron/neutron.conf ovn ovn_sb_connection tcp:$my_ip:6642
 
 mkdir -p /var/lib/neutron
 iniset /etc/neutron/neutron.conf oslo_concurrency lock_path /var/lib/neutron
@@ -120,8 +122,8 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_geneve vni_ranges '1:65536
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_geneve max_header_size '58'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_l3_mode True
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_nb_connection tcp:$3:6641
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_sb_connection tcp:$3:6642
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_nb_connection tcp:$my_ip:6641
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_sb_connection tcp:$my_ip:6642
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_native_dhcp True
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini ovn ovn_l3_scheduler leastloaded
 

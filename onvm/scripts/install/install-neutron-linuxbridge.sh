@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -12,6 +10,9 @@ apt-get update
 apt-get install -qqy "$leap_aptopt" neutron-server
 
 echo "Neutron packages are installed!"
+
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
 
 service neutron-server stop
 
@@ -74,14 +75,14 @@ iniset /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_vxlan vxlan_group '239.1.1
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan l2_population 'True'
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $3
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan local_ip $my_ip
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini vxlan vxlan_group '239.1.1.1'
 
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/ml2_conf.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings "vxlan:eth1"
+iniset /etc/neutron/plugins/ml2/ml2_conf.ini linux_bridge physical_interface_mappings "vxlan:${leap_tunnelnic}"
 
 # clean up configuration files
 

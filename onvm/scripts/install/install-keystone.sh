@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -13,7 +11,10 @@ apt-get install -qqy "$leap_aptopt" keystone apache2 libapache2-mod-wsgi memcach
 
 echo "Keystone packages are installed!"
 
-sed -i -e "s/127.0.0.1/$3/1" /etc/memcached.conf
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
+
+sed -i -e "s/127.0.0.1/$my_ip/1" /etc/memcached.conf
 service memcache restart
 
 iniset /etc/keystone/keystone.conf DEFAULT admin_token $1
@@ -51,7 +52,7 @@ export OS_URL=http://$leap_logical2physical_keystone:35357/v3
 export OS_IDENTITY_API_VERSION=3
 
 openstack service create --name keystone --description "OpenStack Identity" identity
-eval pub_ip=\$leap_${leap_logical2physical_keystone}_eth0; pub_ip=`echo $pub_ip`
+eval pub_ip=\$leap_${leap_logical2physical_keystone}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 openstack endpoint create --region RegionOne identity public http://$pub_ip:5000/v3
 openstack endpoint create --region RegionOne identity internal http://$leap_logical2physical_keystone:5000/v3
 openstack endpoint create --region RegionOne identity admin http://$leap_logical2physical_keystone:35357/v3
@@ -108,25 +109,25 @@ for key in keystone neutron nova glance cinder; do
 done
 
 openstack service create --name glance --description "OpenStack Image service" image
-eval pub_ip=\$leap_${leap_logical2physical_glance}_eth0; pub_ip=`echo $pub_ip`
+eval pub_ip=\$leap_${leap_logical2physical_glance}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 openstack endpoint create --region RegionOne image public http://$pub_ip:9292
 openstack endpoint create --region RegionOne image internal http://$leap_logical2physical_glance:9292
 openstack endpoint create --region RegionOne image admin http://$leap_logical2physical_glance:9292
 
 openstack service create --name nova --description "OpenStack Compute" compute
-eval pub_ip=\$leap_${leap_logical2physical_nova}_eth0; pub_ip=`echo $pub_ip`
+eval pub_ip=\$leap_${leap_logical2physical_nova}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 openstack endpoint create --region RegionOne compute public http://$pub_ip:8774/v2.1/%\(tenant_id\)s
 openstack endpoint create --region RegionOne compute internal http://$leap_logical2physical_nova:8774/v2.1/%\(tenant_id\)s
 openstack endpoint create --region RegionOne compute admin http://$leap_logical2physical_nova:8774/v2.1/%\(tenant_id\)s
 
 openstack service create --name neutron --description "OpenStack Networking" network
-eval pub_ip=\$leap_${leap_logical2physical_neutron}_eth0; pub_ip=`echo $pub_ip`
+eval pub_ip=\$leap_${leap_logical2physical_neutron}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 openstack endpoint create --region RegionOne network public http://$pub_ip:9696
 openstack endpoint create --region RegionOne network internal http://$leap_logical2physical_neutron:9696
 openstack endpoint create --region RegionOne network admin http://$leap_logical2physical_neutron:9696
 
 #openstack service create --name ceilometer --description "OpenStack Telemetry" metering
-#eval pub_ip=\$leap_${leap_logical2physical_ceilometer}_eth0; pub_ip=`echo $pub_ip`
+#eval pub_ip=\$leap_${leap_logical2physical_ceilometer}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 #openstack endpoint create --region RegionOne metering public http://$pub_ip:8777
 #openstack endpoint create --region RegionOne metering internal http://$leap_logical2physical_ceilometer:8777
 #openstack endpoint create --region RegionOne metering admin http://$leap_logical2physical_ceilometer:8777
@@ -134,7 +135,7 @@ openstack endpoint create --region RegionOne network admin http://$leap_logical2
 
 openstack service create --name cinder --description "OpenStack Block Storage" volume
 openstack service create --name cinderv2 --description "OpenStack Block Storage" volumev2
-eval pub_ip=\$leap_${leap_logical2physical_cinder}_eth0; pub_ip=`echo $pub_ip`
+eval pub_ip=\$leap_${leap_logical2physical_cinder}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 openstack endpoint create --region RegionOne volume public http://$pub_ip:8776/v1/%\(tenant_id\)s
 openstack endpoint create --region RegionOne volume internal http://$leap_logical2physical_cinder:8776/v1/%\(tenant_id\)s
 openstack endpoint create --region RegionOne volume admin http://$leap_logical2physical_cinder:8776/v1/%\(tenant_id\)s
@@ -146,7 +147,7 @@ openstack endpoint create --region RegionOne volumev2 admin http://$leap_logical
 # Orchestration setups
 #openstack service create --name heat --description "Orchestration" orchestration
 #openstack service create --name heat-cfn --description "Orchestration"  cloudformation
-#eval pub_ip=\$leap_${leap_logical2physical_heat}_eth0; pub_ip=`echo $pub_ip`
+#eval pub_ip=\$leap_${leap_logical2physical_heat}_${leap_publicnic}; pub_ip=`echo $pub_ip`
 #openstack endpoint create --region RegionOne orchestration public http://$pub_ip:8004/v1/%\(tenant_id\)s
 #openstack endpoint create --region RegionOne orchestration internal http://$leap_logical2physical_heat:8004/v1/%\(tenant_id\)s
 #openstack endpoint create --region RegionOne orchestration admin http://$leap_logical2physical_heat:8004/v1/%\(tenant_id\)s

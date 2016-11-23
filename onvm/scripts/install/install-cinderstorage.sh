@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -11,9 +9,12 @@ apt-get install -qqy "$leap_aptopt" cinder-volume python-mysqldb
 
 echo "Cinder storage packages are installed!"
 
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
+
 iniset /etc/cinder/cinder.conf DEFAULT debug 'True'
 iniset /etc/cinder/cinder.conf DEFAULT auth_strategy 'keystone'
-iniset /etc/cinder/cinder.conf DEFAULT my_ip $3
+iniset /etc/cinder/cinder.conf DEFAULT my_ip $my_ip
 iniset /etc/cinder/cinder.conf DEFAULT enabled_backends 'lvm'
 iniset /etc/cinder/cinder.conf DEFAULT glance_host $leap_logical2physical_glance
 inidelete /etc/cinder/cinder.conf DEFAULT volume_group

@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -14,7 +12,10 @@ apt-get -qqy "$leap_aptopt" install mariadb-server python-pymysql
 
 echo "Installed MariaDB!"
 
-iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld bind-address $3
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
+
+iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld bind-address $my_ip
 iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld default-storage-engine innodb
 iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld innodb_file_per_table on
 iniset /etc/mysql/mariadb.conf.d/99-openstack.cnf mysqld collation-server utf8_general_ci
@@ -25,7 +26,7 @@ service mysql restart
 
 wait
 # Create needed databases
-IFS=. read -ra parts <<< $3 && subnet=`echo ${parts[0]}.${parts[1]}.${parts[2]}.%`
+IFS=. read -ra parts <<< $my_ip && subnet=`echo ${parts[0]}.${parts[1]}.${parts[2]}.%`
 echo "Management network:"${subnet}
 for db in keystone neutron nova glance cinder; do
   mysql -uroot -p$1 -e "CREATE DATABASE $db;"

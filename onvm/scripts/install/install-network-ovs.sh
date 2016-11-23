@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # $1 sys_password
-# $2 public ip eth0
-# $3 private ip eth1
 
 source /onvm/scripts/ini-config
 eval $(parse_yaml '/onvm/conf/nodes.conf.yml' 'leap_')
@@ -17,6 +15,8 @@ service neutron-openvswitch-agent stop
 
 echo "Network node packages are installed!"
 
+tun_cidr=$(ip -4 addr show $leap_tunnelnic | awk -F '/' '/inet / {print $1}')
+arr=($tun_cidr); my_ip="${arr[1]}"
 
 # Configure the kernel to enable packet forwarding and disable reverse path filting
 echo 'Configure the kernel to enable packet forwarding and disable reverse path filting'
@@ -60,7 +60,7 @@ iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_secur
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
 
-iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $3
+iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs local_ip $my_ip
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs enable_tunneling True
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings 'public:br-ex'
 iniset /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs integration_bridge br-int
@@ -82,7 +82,7 @@ iniset /etc/neutron/l3_agent.ini DEFAULT router_delete_namespaces 'True'
 #Configure /etc/neutron/metadata_agent.ini
 echo "Configure the metadata agent"
 
-metahost=$(echo '$leap_'$leap_logical2physical_nova'_eth1')
+metahost=$(echo '$leap_'$leap_logical2physical_nova'_'$leap_tunnelnic)
 eval metahost=$metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT nova_metadata_ip $metahost
 iniset /etc/neutron/metadata_agent.ini DEFAULT metadata_proxy_shared_secret $1
@@ -121,13 +121,13 @@ service neutron-metadata-agent start
 #echo "Configuring bridges"
 
 echo "Adding public nic to ovs bridge..."
-br_ex_ip=$(ip -4 addr show $leap_pubnic | awk '/inet / {print $2}')
+br_ex_ip=$(ip -4 addr show $leap_publicnic | awk '/inet / {print $2}')
 default_gw=$(route -n | awk '/^0.0.0.0 /{print $2}')
 
 echo 'Process interfaces file to make changes permanent...'
-pos=$(sed -n "/^auto $leap_pubnic/,/^auto/=" /etc/network/interfaces)
+pos=$(sed -n "/^auto $leap_publicnic/,/^auto/=" /etc/network/interfaces)
 pos=$(echo $pos); read -r -a pos <<< "$pos"
-netmask=$(ifconfig "$leap_pubnic" | awk -F ':' '/inet / {print $4}')
+netmask=$(ifconfig "$leap_publicnic" | awk -F ':' '/inet / {print $4}')
 sed -i "${pos[0]},${pos[-2]}d" /etc/network/interfaces
 
 echo "" >> /etc/network/interfaces
@@ -135,19 +135,19 @@ echo "auto br-ex" >> /etc/network/interfaces
 echo "allow-ovs br-ex" >> /etc/network/interfaces
 echo "iface br-ex inet static" >> /etc/network/interfaces
 echo "  ovs_type OVSBridge" >> /etc/network/interfaces
-echo "  ovs_ports $leap_pubnic" >> /etc/network/interfaces
+echo "  ovs_ports $leap_publicnic" >> /etc/network/interfaces
 echo "  address $br_ex_ip" >> /etc/network/interfaces
 echo "  netmask $netmask" >> /etc/network/interfaces
 echo "  gateway $default_gw" >> /etc/network/interfaces
 echo "  dns-nameservers 8.8.8.8 8.8.4.4" >> /etc/network/interfaces
 
 echo "" >> /etc/network/interfaces
-echo "auto $leap_pubnic" >> /etc/network/interfaces
-echo "allow-br-ex $leap_pubnic" >> /etc/network/interfaces
-echo "iface $leap_pubnic inet manual" >> /etc/network/interfaces
+echo "auto $leap_publicnic" >> /etc/network/interfaces
+echo "allow-br-ex $leap_publicnic" >> /etc/network/interfaces
+echo "iface $leap_publicnic inet manual" >> /etc/network/interfaces
 echo "  ovs_type OVSPort" >> /etc/network/interfaces
 echo "  ovs_bridge br-ex" >> /etc/network/interfaces
 
-ip addr del $br_ex_ip dev $leap_pubnic; ip addr add $br_ex_ip brd + dev br-ex; ovs-vsctl add-port br-ex $leap_pubnic; ip link set dev br-ex up; ip route add default via $default_gw dev br-ex
+ip addr del $br_ex_ip dev $leap_publicnic; ip addr add $br_ex_ip brd + dev br-ex; ovs-vsctl add-port br-ex $leap_publicnic; ip link set dev br-ex up; ip route add default via $default_gw dev br-ex
 
 echo "Neutron network setup is now complete!"
