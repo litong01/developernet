@@ -8,6 +8,10 @@ apt-get -qqy update
 apt-get install -qqy "$leap_aptopt" nova-compute sysfsutils
 apt-get install -qqy "$leap_aptopt" neutron-plugin-linuxbridge-agent
 
+# Get rid of virbr0
+virsh net-destroy default
+virsh net-undefine default
+
 service nova-compute stop
 service neutron-linuxbridge-agent stop
 
@@ -124,6 +128,8 @@ iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini ml2_type_vxlan vxlan_group
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_ipset 'True'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup enable_security_group True
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+
+iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini linux_bridge physical_interface_mappings "vxlan:${leap_tunnelnic}"
 
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan enable_vxlan 'True'
 iniset /etc/neutron/plugins/ml2/linuxbridge_agent.ini vxlan l2_population 'True'
