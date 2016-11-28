@@ -44,6 +44,12 @@ sed -i -e "s/'enable_ipv6': True/'enable_ipv6': False/1" /etc/openstack-dashboar
 # Do this to make the browser go to the horizon app
 cp /onvm/conf/index.html /var/www/html
 
+apt-get install -qqy git python-dev
+easy_install -U pip
+pip install trove-dashboard
+
+cp /usr/local/lib/python2.7/dist-packages/trove_dashboard/enabled/* /usr/share/openstack-dashboard/openstack_dashboard/enabled
+
 service apache2 reload
 
 echo 'Horizon installation is now complete'

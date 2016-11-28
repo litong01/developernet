@@ -103,7 +103,7 @@ unset OS_IDENTITY_API_VERSION
 echo "Set up endpoints for glance, cinder, nova, and neutron"
 
 source ~/admin-openrc.sh
-for key in keystone neutron nova glance cinder; do
+for key in keystone neutron nova glance cinder trove; do
   openstack user create --domain default --password $1 $key
   openstack role add --project service --user $key admin
 done
@@ -142,6 +142,13 @@ openstack endpoint create --region RegionOne volume admin http://$leap_logical2p
 openstack endpoint create --region RegionOne volumev2 public http://$pub_ip:8776/v2/%\(tenant_id\)s
 openstack endpoint create --region RegionOne volumev2 internal http://$leap_logical2physical_cinder:8776/v1/%\(tenant_id\)s
 openstack endpoint create --region RegionOne volumev2 admin http://$leap_logical2physical_cinder:8776/v1/%\(tenant_id\)s
+
+
+openstack service create --name trove --description "OpenStack Database" database
+eval pub_ip=\$leap_${leap_logical2physical_trove}_${leap_publicnic}; pub_ip=`echo $pub_ip`
+openstack endpoint create --region RegionOne database public http://$pub_ip:8779/v1.0/%\(tenant_id\)s
+openstack endpoint create --region RegionOne database internal http://$leap_logical2physical_trove:8779/v1.0/%\(tenant_id\)s
+openstack endpoint create --region RegionOne database admin http://$leap_logical2physical_trove:8779/v1.0/%\(tenant_id\)s
 
 
 # Orchestration setups
