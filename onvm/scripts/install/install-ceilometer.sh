@@ -18,8 +18,8 @@ iniset /etc/ceilometer/ceilometer.conf database connection mysql+pymysql://ceilo
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken auth_uri http://$leap_logical2physical_keystone:5000
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken auth_url http://$leap_logical2physical_keystone:35357
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken auth_type 'password'
-iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken project_domain_name 'default'
-iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken user_domain_name 'default'
+iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken project_domain_name 'Default'
+iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken user_domain_name 'Default'
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken project_name 'service'
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken username 'ceilometer'
 iniset /etc/ceilometer/ceilometer.conf  keystone_authtoken password $1

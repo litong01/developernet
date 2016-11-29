@@ -18,8 +18,8 @@ iniset /etc/glance/glance-api.conf database connection "mysql+pymysql://glance:$
 iniset /etc/glance/glance-api.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/glance/glance-api.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/glance/glance-api.conf keystone_authtoken auth_type 'password'
-iniset /etc/glance/glance-api.conf keystone_authtoken project_domain_name 'default'
-iniset /etc/glance/glance-api.conf keystone_authtoken user_domain_name 'default'
+iniset /etc/glance/glance-api.conf keystone_authtoken project_domain_name 'Default'
+iniset /etc/glance/glance-api.conf keystone_authtoken user_domain_name 'Default'
 iniset /etc/glance/glance-api.conf keystone_authtoken project_name 'service'
 iniset /etc/glance/glance-api.conf keystone_authtoken username 'glance'
 iniset /etc/glance/glance-api.conf keystone_authtoken password $1
@@ -43,8 +43,8 @@ iniset /etc/glance/glance-registry.conf database connection "mysql+pymysql://gla
 iniset /etc/glance/glance-registry.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/glance/glance-registry.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/glance/glance-registry.conf keystone_authtoken auth_type 'password'
-iniset /etc/glance/glance-registry.conf keystone_authtoken project_domain_name 'default'
-iniset /etc/glance/glance-registry.conf keystone_authtoken user_domain_name 'default'
+iniset /etc/glance/glance-registry.conf keystone_authtoken project_domain_name 'Default'
+iniset /etc/glance/glance-registry.conf keystone_authtoken user_domain_name 'Default'
 iniset /etc/glance/glance-registry.conf keystone_authtoken project_name 'service'
 iniset /etc/glance/glance-registry.conf keystone_authtoken username 'glance'
 iniset /etc/glance/glance-registry.conf keystone_authtoken password $1

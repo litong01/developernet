@@ -40,8 +40,8 @@ iniset /etc/neutron/neutron.conf database connection "mysql+pymysql://neutron:$1
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_uri "http://${leap_logical2physical_keystone}:5000"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf keystone_authtoken auth_type 'password'
-iniset /etc/neutron/neutron.conf keystone_authtoken project_domain_name 'default'
-iniset /etc/neutron/neutron.conf keystone_authtoken user_domain_name 'default'
+iniset /etc/neutron/neutron.conf keystone_authtoken project_domain_name 'Default'
+iniset /etc/neutron/neutron.conf keystone_authtoken user_domain_name 'Default'
 iniset /etc/neutron/neutron.conf keystone_authtoken project_name 'service'
 iniset /etc/neutron/neutron.conf keystone_authtoken username 'neutron'
 iniset /etc/neutron/neutron.conf keystone_authtoken password $1
@@ -53,8 +53,8 @@ inidelete /etc/neutron/neutron.conf keystone_authtoken admin_password
 
 iniset /etc/neutron/neutron.conf nova auth_url "http://${leap_logical2physical_keystone}:35357"
 iniset /etc/neutron/neutron.conf nova auth_type 'password'
-iniset /etc/neutron/neutron.conf nova project_domain_name 'default'
-iniset /etc/neutron/neutron.conf nova user_domain_name 'default'
+iniset /etc/neutron/neutron.conf nova project_domain_name 'Default'
+iniset /etc/neutron/neutron.conf nova user_domain_name 'Default'
 iniset /etc/neutron/neutron.conf nova region_name 'RegionOne'
 iniset /etc/neutron/neutron.conf nova project_name 'service'
 iniset /etc/neutron/neutron.conf nova username 'nova'

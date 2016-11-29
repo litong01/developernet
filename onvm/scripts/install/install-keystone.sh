@@ -47,32 +47,22 @@ rm -f /var/lib/keystone/keystone.db
 wait
 echo "Ready to create endpoints"
 
-export OS_TOKEN=$1
-export OS_URL=http://$leap_logical2physical_keystone:35357/v3
-export OS_IDENTITY_API_VERSION=3
-
-openstack service create --name keystone --description "OpenStack Identity" identity
 eval pub_ip=\$leap_${leap_logical2physical_keystone}_${leap_publicnic}; pub_ip=`echo $pub_ip`
-openstack endpoint create --region RegionOne identity public http://$pub_ip:5000/v3
-openstack endpoint create --region RegionOne identity internal http://$leap_logical2physical_keystone:5000/v3
-openstack endpoint create --region RegionOne identity admin http://$leap_logical2physical_keystone:35357/v3
 
-openstack domain create --description "Default Domain" default
-openstack project create --domain default --description "Admin Project" admin
-openstack user create --domain default --password $1 admin
-openstack role create admin
-openstack role add --project admin --user admin admin
-openstack project create --domain default --description "Service Project" service
+keystone-manage bootstrap --bootstrap-password $1 \
+  --bootstrap-public-url http://$pub_ip:5000/v3 \
+  --bootstrap-admin-url http://$leap_logical2physical_keystone:35357/v3 \
+  --bootstrap-internal-url http://$leap_logical2physical_keystone:5000/v3 \
+  --bootstrap-region-id RegionOne
 
-openstack project create --domain default --description "Demo Project" demo
-openstack user create --domain default --password $1 demo
-openstack role create user
-openstack role add --project demo --user demo user
-
+keystone-manage bootstrap --bootstrap-password $1 \
+  --bootstrap-username demo \
+  --bootstrap-project-name demo \
+  --bootstrap-role-name user
 
 # Now setup two files for testing
-echo "export OS_PROJECT_DOMAIN_NAME=default" > ~/admin-openrc.sh
-echo "export OS_USER_DOMAIN_NAME=default" >> ~/admin-openrc.sh
+echo "export OS_PROJECT_DOMAIN_NAME=Default" > ~/admin-openrc.sh
+echo "export OS_USER_DOMAIN_NAME=Default" >> ~/admin-openrc.sh
 echo "export OS_PROJECT_NAME=admin" >> ~/admin-openrc.sh
 echo "export OS_TENANT_NAME=admin" >> ~/admin-openrc.sh
 echo "export OS_USERNAME=admin" >> ~/admin-openrc.sh
@@ -80,8 +70,8 @@ echo "export OS_PASSWORD=$1" >> ~/admin-openrc.sh
 echo "export OS_AUTH_URL=http://${pub_ip}:35357/v3" >> ~/admin-openrc.sh
 echo "export OS_IDENTITY_API_VERSION=3" >> ~/admin-openrc.sh
 
-echo "export OS_PROJECT_DOMAIN_NAME=default" > ~/demo-openrc.sh
-echo "export OS_USER_DOMAIN_NAME=default" >> ~/demo-openrc.sh
+echo "export OS_PROJECT_DOMAIN_NAME=Default" > ~/demo-openrc.sh
+echo "export OS_USER_DOMAIN_NAME=Default" >> ~/demo-openrc.sh
 echo "export OS_PROJECT_NAME=demo" >> ~/demo-openrc.sh
 echo "export OS_TENANT_NAME=demo" >> ~/demo-openrc.sh
 echo "export OS_USERNAME=demo" >> ~/demo-openrc.sh
@@ -95,16 +85,13 @@ for key in 'pipeline:public_api' 'pipeline:admin_api' 'pipeline:api_v3'; do
   iniset /etc/keystone/keystone-paste.ini $key pipeline "$val1"
 done
 
-
-unset OS_TOKEN
-unset OS_URL
-unset OS_IDENTITY_API_VERSION
-
 echo "Set up endpoints for glance, cinder, nova, and neutron"
 
 source ~/admin-openrc.sh
+openstack project create --domain Default --description "Service Project" service
+
 for key in keystone neutron nova glance cinder trove; do
-  openstack user create --domain default --password $1 $key
+  openstack user create --domain Default --password $1 $key
   openstack role add --project service --user $key admin
 done
 
