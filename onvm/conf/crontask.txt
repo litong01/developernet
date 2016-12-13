@@ -1,0 +1,9 @@
+# Customized crontab file
+MAILTO=""
+SHELL=/bin/sh
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# m h  dom mon dow   command
+0 1 * * 1 rm -r -f /var/log/**/*.gz
+0 1 * * 1 rm -r -f /var/log/**/*.log.1
+0 1 * * 1 rm -r -f /var/log/*.gz

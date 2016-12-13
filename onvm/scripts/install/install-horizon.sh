@@ -28,9 +28,9 @@ echo '    "image": 2,' >> /etc/openstack-dashboard/local_settings.py
 echo '    "volume": 2,' >> /etc/openstack-dashboard/local_settings.py
 echo '}' >> /etc/openstack-dashboard/local_settings.py
 
-echo 'Set up time zone...'
-cmdStr=$(echo 's/^TIME_ZONE = "UTC"/TIME_ZONE = "'$leap_timezone'"/g')
-sed -i -e "${cmdStr}" /etc/openstack-dashboard/local_settings.py
+#echo 'Set up time zone...'
+#cmdStr=$(echo 's/^TIME_ZONE = "UTC"/TIME_ZONE = "'$leap_timezone'"/g')
+#sed -i -e "${cmdStr}" /etc/openstack-dashboard/local_settings.py
 
 echo 'Setup allowed hosts...'
 sed -i -e "s/^ALLOWED_HOSTS = '\*'/ALLOWED_HOSTS = ['*', ]/" /etc/openstack-dashboard/local_settings.py

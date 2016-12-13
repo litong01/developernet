@@ -1,39 +1,59 @@
 ---
 compute1:
   host_name: compute1.leap.dev
-  eth0: 9.30.217.4
-  eth1: 192.168.217.4
+  eth0: 9.30.107.132
+  eth1: 192.168.107.132
 
 compute2:
   host_name: compute2.leap.dev
-  eth0: 9.30.217.5
-  eth1: 192.168.217.5
+  eth0: 9.30.107.133
+  eth1: 192.168.107.133
 
 compute3:
   host_name: compute3.leap.dev
-  eth0: 9.30.217.6
-  eth1: 192.168.217.6
+  eth0: 9.30.107.134
+  eth1: 192.168.107.134
 
 compute4:
   host_name: compute4.leap.dev
-  eth0: 9.30.217.7
-  eth1: 192.168.217.7
+  eth0: 9.30.107.135
+  eth1: 192.168.107.135
 
 compute5:
   host_name: compute5.leap.dev
-  eth0: 9.30.217.8
-  eth1: 192.168.217.8
+  eth0: 9.30.107.136
+  eth1: 192.168.107.136
+
+compute6:
+  host_name: compute6.leap.dev
+  eth0: 9.30.107.137
+  eth1: 192.168.107.137
+
+compute7:
+  host_name: compute7.leap.dev
+  eth0: 9.30.107.138
+  eth1: 192.168.107.138
+
+compute8:
+  host_name: compute8.leap.dev
+  eth0: 9.30.107.139
+  eth1: 192.168.107.139
+
+compute9:
+  host_name: compute9.leap.dev
+  eth0: 9.30.107.140
+  eth1: 192.168.107.140
 
 controller:
   host_name: controller.leap.dev
-  eth0: 9.30.217.9
-  eth1: 192.168.217.9
+  eth0: 9.30.107.141
+  eth1: 192.168.107.141
 
 public_net:
-  cidr: 9.30.217.1/26
-  start_ip: 9.30.217.16
-  end_ip: 9.30.217.62
-  gateway: 9.30.217.1
+  cidr: 9.30.107.128/26
+  start_ip: 9.30.107.150
+  end_ip: 9.30.107.190
+  gateway: 9.30.107.129
 
 
 # Logical node to physical node mapping, if you like to use one physical
@@ -53,9 +73,9 @@ logical2physical:
   cinder: controller
   nova: controller
   neutron: controller
-  network: [compute4, compute5]
-  cinderstorage: [compute1, compute2, compute3, compute4, compute5]
-  compute: [compute1, compute2, compute3, compute4, compute5]
+  network: [compute8, compute9]
+  cinderstorage: [compute1, compute2, compute3, compute4, compute5, compute6, compute7, compute8, compute9]
+  compute: [compute1, compute2, compute3, compute4, compute5, compute6, compute7, compute8, compute9]
 
 # Define how many logical nodes and the sequence of the installation
 ctlnodes:
@@ -78,9 +98,9 @@ suffixes:
 
 timezone: America\/Los_Angeles
 
-cindervg: vg00
+cindervg: vg02
 
-glance_image_location: /home/images
+glance_image_location: /storage/images
 
 ntpserver: mysqldb
 
@@ -97,7 +117,7 @@ instances_path: /var/lib/nova/instances
 
 # The supported network types are ovs, linuxbridge and ovn
 #
-network: ovs
+network: linuxbridge
 
 # The nodes should be a list of logical name
 # The folder should be a local directory start from the project root

@@ -21,7 +21,7 @@ mount /dev/vg00/resetpoint target
 rm -r -f target/*
 cd target
 tar -xf ../source/cleansystem.tar.gz
-sed -i '/^GRUB_HIDDEN_TIMEOUT/d' etc/default/grub
+#sed -i '/^GRUB_HIDDEN_TIMEOUT/d' etc/default/grub
 cd $dir
 
 umount source/
