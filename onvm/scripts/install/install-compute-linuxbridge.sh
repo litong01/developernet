@@ -25,6 +25,7 @@ iniset /etc/nova/nova.conf DEFAULT auth_strategy 'keystone'
 iniset /etc/nova/nova.conf DEFAULT my_ip $my_ip
 iniset /etc/nova/nova.conf DEFAULT enabled_apis 'osapi_compute,metadata'
 iniset /etc/nova/nova.conf DEFAULT use_neutron True
+iniset /etc/nova/nova.conf DEFAULT dhcp_domain ""
 
 iniset /etc/nova/nova.conf DEFAULT linuxnet_interface_driver 'nova.network.linux_net.NeutronLinuxBridgeInterfaceDriver'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
