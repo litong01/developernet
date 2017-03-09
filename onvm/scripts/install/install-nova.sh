@@ -30,6 +30,7 @@ iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirew
 iniset /etc/nova/nova.conf DEFAULT instances_path $leap_instances_path
 iniset /etc/nova/nova.conf DEFAULT transport_url "rabbit://openstack:$1@${leap_logical2physical_rabbitmq}:5672/"
 iniset /etc/nova/nova.conf DEFAULT notification_driver noop
+iniset /etc/nova/nova.conf DEFAULT dhcp_domain ""
 
 inidelete /etc/nova/nova.conf DEFAULT ec2_private_dns_show_ip
 
