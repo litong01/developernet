@@ -27,6 +27,7 @@ iniset /etc/nova/nova.conf DEFAULT notification_driver noop
 iniset /etc/nova/nova.conf DEFAULT network_api_class 'nova.network.neutronv2.api.API'
 iniset /etc/nova/nova.conf DEFAULT use_neutron 'True'
 iniset /etc/nova/nova.conf DEFAULT firewall_driver 'nova.virt.firewall.NoopFirewallDriver'
+iniset /etc/nova/nova.conf DEFAULT dhcp_domain ""
 
 metahost=$(echo '$leap_'$leap_logical2physical_nova'_'$leap_tunnelnic)
 eval metahost=$metahost
